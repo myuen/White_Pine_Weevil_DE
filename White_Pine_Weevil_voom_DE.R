@@ -8,6 +8,12 @@ rawCounts <- read.table("RSEM/WPW_Inoculation_Trinity_C500.gene.counts.matrix",
                         header = TRUE)
 
 # Simplify column names
+# Demystify Column Names. 
+# First 3 numerical number represents the susceptible/resistance genotype.
+# Followed by a single alphabet for treatment and the last number represents 
+# biological replicates.
+# 898 = Resistance Genotype; 903 = Susceptible Genotype
+# C = Control, G = Gallery, W = Wounding
 colnames(rawCounts) <- c("898C1", "898C2", "898C3", "898C4", 
                          "898G1", "898G2", "898G3", "898G4", 
                          "898W1", "898W2", "898W3", "898W4", 
@@ -15,7 +21,8 @@ colnames(rawCounts) <- c("898C1", "898C2", "898C3", "898C4",
                          "903G1", "903G2", "903G3", "903G4", 
                          "903W1", "903W2", "903W3", "903W4")
 
-# Remove ribosomal RNA in the assembly
+# We discovered more ribosomal RNA post-assembly using BLAST.  The following 
+# line removes putaive ribosomal RNA from the table.
 rRNA <- read.table("blast/putativeRibosomalRNA.id", header = TRUE)
 
 rawCounts <- rawCounts[!(rownames(rawCounts) %in% rRNA$Query),]
@@ -25,17 +32,21 @@ save.image("R/White_Pine_Weevil_DE/WPW_voom_DE_raw.RData")
 
 #barplot(colSums(rawCounts)*1e-6, names=1:24, ylab="Library size (millions)")
 
+# Load edgeR library
 library(edgeR)
 
+# Load counts into DGEList object from edgeR package.
 y <- DGEList(counts=rawCounts)
 
-# Keep only genes with at least 1 count-per-million reads (cpm) in at least 4 samples
+# Keep only genes with at least 1 count-per-million reads (cpm) in 
+# at least 4 samples.
 z <- y[(rowSums(cpm(y) > 1) >= 4), ]
 
-# Reset depth
+# Library depth is now changed with the filtering of the low count 
+# contigs so we need to reset the libray depth.
 z$samples$lib.size <- colSums(z$counts)
 
-# Normalize by Depth
+# TMM Normalization by Depth
 z <- calcNormFactors(z)
 
 # Create design matrix
@@ -53,9 +64,10 @@ Treatment <- factor(targets$Treatment, levels=c("Control", "Gallery", "Wound"))
 Group <- factor(paste(targets$Genotype, targets$Treatment, sep="_"))
 targets <- cbind(targets, Group=Group)
 
-###
+# Linear design matrix, simplest approach
 linear.design <- model.matrix(~ 0 + Group)
-# the design generates the exact same design matrix as the following
+
+# The design generates the exact same design matrix as the linear approach
 #treatmentPerGenotype.design <- model.matrix(~ Treatment %in% Genotype - 1, data=targets)
 colnames(linear.design) <- levels(targets$Group)
 
@@ -72,20 +84,17 @@ linear.cont.matrix <- makeContrasts(
  Wound_H898_vs_Q903 = H898_Wound - Q903_Wound,
  levels = linear.design)
 
-###
 
+# Trying out a 2x3 factor design matrix approach
 twoFactorModel.design1 <- model.matrix(~ Genotype/Treatment - 1, targets)
 colnames(twoFactorModel.design1) <- c("H898", "Q903", "H898_Gallery", "Q903_Gallery", "H898_Wound", "Q903_Wound")
-
-###
 
 twoFactorModel.design2 <- model.matrix(~ Treatment/Genotype - 1, targets)
 colnames(twoFactorModel.design2) <- c("Control", "Gallery", "Wound", "Control_Q903", "Gallery_Q903", "Wound_Q903")
 
-###
-
-# Voom normalization
+# Voom transformation
 linear.v <- voom(z, linear.design, plot=TRUE)
+
 twoFactorModel1.v <- voom(z, twoFactorModel.design1, plot=TRUE)
 twoFactorModel2.v <- voom(z, twoFactorModel.design2, plot=TRUE)
 
@@ -107,6 +116,7 @@ twoFactorModel2.v <- voom(z, twoFactorModel.design2, plot=TRUE)
 
 # Linear modelling
 linear.fit <- lmFit(linear.v, linear.design)
+
 twoFactorModel1.fit <- lmFit(twoFactorModel1.v, twoFactorModel.design1)
 twoFactorModel2.fit <- lmFit(twoFactorModel2.v, twoFactorModel.design2)
 
