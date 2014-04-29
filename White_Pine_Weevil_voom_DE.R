@@ -1,39 +1,9 @@
 ### Differential Expression Analysis on Sitka Spruce Weevil Experiment with limma + voom
 
-# Set working directory
-setwd("/samba/data1/SMarTForest/sitka/RNA-Seq/assemblies/White_Pine_Weevil_Inoculation-JWhitehill/White_Pine_Weevil_Inoculation_Trinity_minKmer2_C500_PasaFly_Dec2013/")
-
-# Load counts from RSEM
-rawCounts <- read.table("RSEM/WPW_Inoculation_Trinity_C500.gene.counts.matrix",
-                        header = TRUE)
-
-# Simplify column names
-# Demystify Column Names. 
-# First 3 numerical number represents the susceptible/resistance genotype.
-# Followed by a single alphabet for treatment and the last number represents 
-# biological replicates.
-# 898 = Resistance Genotype; 903 = Susceptible Genotype
-# C = Control, G = Gallery, W = Wounding
-colnames(rawCounts) <- c("898C1", "898C2", "898C3", "898C4", 
-                         "898G1", "898G2", "898G3", "898G4", 
-                         "898W1", "898W2", "898W3", "898W4", 
-                         "903C1", "903C2", "903C3", "903C4", 
-                         "903G1", "903G2", "903G3", "903G4", 
-                         "903W1", "903W2", "903W3", "903W4")
-
-# We discovered more ribosomal RNA post-assembly using BLAST.  The following 
-# line removes putaive ribosomal RNA from the table.
-rRNA <- read.table("blast/putativeRibosomalRNA.id", header = TRUE)
-
-rawCounts <- rawCounts[!(rownames(rawCounts) %in% rRNA$Query),]
-
-# Save image if needed to restart
-save.image("R/White_Pine_Weevil_DE/WPW_voom_DE_raw.RData")
-
-#barplot(colSums(rawCounts)*1e-6, names=1:24, ylab="Library size (millions)")
-
 # Load edgeR library
 library(edgeR)
+
+rawCounts <- read.table("RSEM_raw_counts_cleaned.txt", header=TRUE)
 
 # Load counts into DGEList object from edgeR package.
 y <- DGEList(counts=rawCounts)
@@ -73,24 +43,26 @@ colnames(linear.design) <- levels(targets$Group)
 
 # Create contrast matrix
 linear.cont.matrix <- makeContrasts(
- Gallery_vs_Control_H898 = H898_Gallery - H898_Control,
- Wound_vs_Control_H898 = H898_Wound - H898_Control,
- Gallery_vs_Wound_H898 = H898_Gallery - H898_Wound,
- Gallery_vs_Control_Q903 = Q903_Gallery - Q903_Control,
- Wound_vs_Control_Q903 = Q903_Wound - Q903_Control,
- Gallery_vs_Wound_Q903 = Q903_Gallery - Q903_Wound,
- Control_H898_vs_Q903 = H898_Control - Q903_Control,
- Gallery_H898_vs_Q903 = H898_Gallery - Q903_Gallery,
- Wound_H898_vs_Q903 = H898_Wound - Q903_Wound,
- levels = linear.design)
+  Gallery_vs_Control_H898 = H898_Gallery - H898_Control,
+  Wound_vs_Control_H898 = H898_Wound - H898_Control,
+  Gallery_vs_Wound_H898 = H898_Gallery - H898_Wound,
+  Gallery_vs_Control_Q903 = Q903_Gallery - Q903_Control,
+  Wound_vs_Control_Q903 = Q903_Wound - Q903_Control,
+  Gallery_vs_Wound_Q903 = Q903_Gallery - Q903_Wound,
+  Control_H898_vs_Q903 = H898_Control - Q903_Control,
+  Gallery_H898_vs_Q903 = H898_Gallery - Q903_Gallery,
+  Wound_H898_vs_Q903 = H898_Wound - Q903_Wound,
+  levels = linear.design)
 
 
 # Trying out a 2x3 factor design matrix approach
 twoFactorModel.design1 <- model.matrix(~ Genotype/Treatment - 1, targets)
-colnames(twoFactorModel.design1) <- c("H898", "Q903", "H898_Gallery", "Q903_Gallery", "H898_Wound", "Q903_Wound")
+colnames(twoFactorModel.design1) <- c("H898", "Q903", "H898_Gallery", "Q903_Gallery",
+                                      "H898_Wound", "Q903_Wound")
 
 twoFactorModel.design2 <- model.matrix(~ Treatment/Genotype - 1, targets)
-colnames(twoFactorModel.design2) <- c("Control", "Gallery", "Wound", "Control_Q903", "Gallery_Q903", "Wound_Q903")
+colnames(twoFactorModel.design2) <- c("Control", "Gallery", "Wound", 
+                                      "Control_Q903", "Gallery_Q903", "Wound_Q903")
 
 # Voom transformation
 linear.v <- voom(z, linear.design, plot=TRUE)
