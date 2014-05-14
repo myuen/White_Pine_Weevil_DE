@@ -1,4 +1,5 @@
-### Differential Expression Analysis on Sitka Spruce Weevil Experiment with limma + voom
+### Differential Expression Analysis on Sitka Spruce Weevil 
+### Experiment with limma + voom
 
 # Load counts from RSEM
 rawSailfishCounts <- read.table("consolidated-Sailfish-results.txt", header = TRUE)
@@ -34,53 +35,56 @@ targets <- as.data.frame(targets)
 Genotype <- factor(targets$Genotype, levels=c("H898", "Q903"))
 Treatment <- factor(targets$Treatment, levels=c("Control", "Gallery", "Wound"))
 
-Group <- factor(paste(targets$Genotype, targets$Treatment, sep="_"))
+Group <- factor(interaction(targets$Genotype, targets$Treatment))
 targets <- cbind(targets, Group=Group)
 
 # Linear design matrix, simplest approach
-linear.design <- model.matrix(~ 0 + Group)
-colnames(linear.design) <- levels(targets$Group)
+design <- model.matrix(~ 0 + Group)
+colnames(design) <- levels(targets$Group)
 
 # Create contrast matrix
-linear.cont.matrix <- makeContrasts(
-  Gallery_vs_Control_H898 = H898_Gallery - H898_Control,
-  Wound_vs_Control_H898 = H898_Wound - H898_Control,
-  Gallery_vs_Wound_H898 = H898_Gallery - H898_Wound,
-  Gallery_vs_Control_Q903 = Q903_Gallery - Q903_Control,
-  Wound_vs_Control_Q903 = Q903_Wound - Q903_Control,
-  Gallery_vs_Wound_Q903 = Q903_Gallery - Q903_Wound,
-  Control_H898_vs_Q903 = H898_Control - Q903_Control,
-  Gallery_H898_vs_Q903 = H898_Gallery - Q903_Gallery,
-  Wound_H898_vs_Q903 = H898_Wound - Q903_Wound,
-  levels = linear.design)
+cont.matrix <- makeContrasts(
+  Control.H898_vs_Q903 = H898.Control - Q903.Control,
+  Induced.H898_vs_Q903 = 
+    (H898.Gallery - (H898.Wound - H898.Control)) - 
+    (Q903.Gallery - (Q903.Wound - Q903.Control)),
+  levels = design)
 
 # Voom transformation
-linear.v <- voom(y, linear.design, plot=TRUE)
+v <- voom(y, design, plot=TRUE)
 
 # MDS analysis
 plotMDS(linear.v, top=Inf)
 
 # PCA analysis
-# library(ggplot2)
-# pca <- as.data.frame(prcomp(t(linear.v$E))$x)
-# ggplot(pca, aes(PC1, PC2, color = Group)) + geom_point(size=3) + 
-#   scale_color_manual(name = "", 
-#                      values=c("H898_Control" = "#4d004b", 
-#                               "H898_Gallery" = "#88419d", 
-#                               "H898_Wound" = "#8c96c6", 
-#                               "Q903_Control" = "#7F0000", 
-#                               "Q903_Gallery" =  "#d7301f", 
-#                               "Q903_Wound" = "#fc8d59")) + 
-#   labs(title="Voom + Limma Principal Component Analysis") + theme_bw()
+library(ggplot2)
+pca <- as.data.frame(prcomp(t(v$E))$x)
+ggplot(pca, aes(PC1, PC2, color = Group)) + geom_point(size=3) + 
+  scale_color_manual(name = "", 
+                     values=c("H898.Control" = "#4d004b", 
+                              "H898.Gallery" = "#88419d", 
+                              "H898.Wound" = "#8c96c6", 
+                              "Q903.Control" = "#7F0000", 
+                              "Q903.Gallery" =  "#d7301f", 
+                              "Q903.Wound" = "#fc8d59")) + 
+  labs(title="Voom + Limma Principal Component Analysis") + theme_bw()
 
 # Linear modelling
-linear.fit <- lmFit(linear.v, linear.design)
+fit <- lmFit(v, design)
 
-linear.fit2 <- contrasts.fit(linear.fit, linear.cont.matrix)
+fit2 <- contrasts.fit(fit, cont.matrix)
 
-linear.fit2 <- eBayes(linear.fit2)
+fit2 <- eBayes(fit2)
 
-linear.results <- decideTests(linear.fit2, method="separate", 
-                              adjust.method="BH", p.value=0.01)
+linear.results <- decideTests(fit2, method="global", 
+                              adjust.method="fdr", p.value=0.01)
 
 summary(linear.results)
+
+###
+
+vennDiagram(linear.results, include="both")
+vennDiagram(linear.results, include="up")
+vennDiagram(linear.results, include="down")
+
+###
