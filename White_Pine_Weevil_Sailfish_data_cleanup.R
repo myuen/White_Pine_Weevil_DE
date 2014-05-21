@@ -1,47 +1,78 @@
-# Read the raw output file from Sailfish
-H898C1 <- read.table("Sailfish-results/898C1_quant.sf", header = FALSE)
-H898C2 <- read.table("Sailfish-results/898C2_quant.sf", header = FALSE)
-H898C3 <- read.table("Sailfish-results/898C3_quant.sf", header = FALSE)
-H898C4 <- read.table("Sailfish-results/898C4_quant.sf", header = FALSE)
+library(testthat)
+library(plyr)
 
-H898G1 <- read.table("Sailfish-results/898G1_quant.sf", header = FALSE)
-H898G2 <- read.table("Sailfish-results/898G2_quant.sf", header = FALSE)
-H898G3 <- read.table("Sailfish-results/898G3_quant.sf", header = FALSE)
-H898G4 <- read.table("Sailfish-results/898G4_quant.sf", header = FALSE)
+# Marshal output files from Sailfish
+jFiles <- list.files("Sailfish-results/", full.names = TRUE)
+test_that("Exactly 24 Sailfish output files are found",
+          expect_equal(24, length(jFiles)))
 
-H898W1 <- read.table("Sailfish-results/898W1_quant.sf", header = FALSE)
-H898W2 <- read.table("Sailfish-results/898W2_quant.sf", header = FALSE)
-H898W3 <- read.table("Sailfish-results/898W3_quant.sf", header = FALSE)
-H898W4 <- read.table("Sailfish-results/898W4_quant.sf", header = FALSE)
+## Extract, e.g. 898C1 from Sailfish-results/898C1_quant.sf
+tmp <- gsub("([0-9]+[CGW][1234])_quant.sf", "\\1", basename(jFiles))
+## Prepend "H" to 898 and "Q" to 903
+tmp <- gsub("898", "H898", tmp)
+tmp <- gsub("903", "Q903", tmp)
+## Use as names for good side effects later
+names(jFiles) <- tmp
+  
+## Read one file to learn how many rows we expect and to grab rownames
+tmp <- read.table(jFiles[1], row.names = 1,
+                  ## specifying colClasses speeds this up 2x
+                  colClasses = rep(c("character", "numeric"), c(1, 6)))
+(n <- nrow(tmp)) # 492317
+jRowNames <- rownames(tmp)
+test_that("First Sailfish output files has 492317 rows",
+          expect_equal(492317, n))
 
-Q903C1 <- read.table("Sailfish-results/903C1_quant.sf", header = FALSE)
-Q903C2 <- read.table("Sailfish-results/903C2_quant.sf", header = FALSE)
-Q903C3 <- read.table("Sailfish-results/903C3_quant.sf", header = FALSE)
-Q903C4 <- read.table("Sailfish-results/903C4_quant.sf", header = FALSE)
+## Read in all Sailfish data
+system.time(
+rawSailfishCounts <-
+  aaply(jFiles, 1, function(x) {
+    jDat <-
+      read.table(x, row.names = 1, nrows = n * 1.1,
+                 ## specifying colClasses speeds this up 2x
+                 colClasses = rep(c("character", "numeric"), c(1, 6)))
+    test_that("Sailfish output files have expected number of rows",
+              expect_equal(n, nrow(jDat)))
+    return(jDat$V7)
+  })
+) ## ~90 seconds for JB
 
-Q903G1 <- read.table("Sailfish-results/903G1_quant.sf", header = FALSE)
-Q903G2 <- read.table("Sailfish-results/903G2_quant.sf", header = FALSE)
-Q903G3 <- read.table("Sailfish-results/903G3_quant.sf", header = FALSE)
-Q903G4 <- read.table("Sailfish-results/903G4_quant.sf", header = FALSE)
+## NOTE: rawSailfishCounts is transposed relative to what we expect / want at
+## this point! Will put up with this here and resolve upon export / import.
+colnames(rawSailfishCounts) <- jRowNames
+str(rawSailfishCounts)
+# num [1:24, 1:492317] 0 0 1.87 0 0 ...
+# - attr(*, "dimnames")=List of 2
+# ..$ X1: chr [1:24] "H898C1" "H898C2" "H898C3" "H898C4" ...
+# ..$   : chr [1:492317] "WPW_Inoculation_Trinity_C500_comp100002_c0_seq1" "WPW_Inoculation_Trinity_C500_comp100009_c0_seq1" "WPW_Inoculation_Trinity_C500_comp100009_c0_seq2" "WPW_Inoculation_Trinity_C500_comp100011_c0_seq1" ...
 
-Q903W1 <- read.table("Sailfish-results/903W1_quant.sf", header = FALSE)
-Q903W2 <- read.table("Sailfish-results/903W2_quant.sf", header = FALSE)
-Q903W3 <- read.table("Sailfish-results/903W3_quant.sf", header = FALSE)
-Q903W4 <- read.table("Sailfish-results/903W4_quant.sf", header = FALSE)
+# We discovered more ribosomal RNA post-assembly using BLAST.  The following 
+# line removes putative ribosomal RNA from the table.
+rRNA <- scan("putativeRibosomalRNA.id", what = "")
+str(rRNA) # chr [1:389] "WPW_Inoculation_Trinity_C500_comp27782_c0_seq1" ...
+summary(colnames(rawSailfishCounts) %in% rRNA)
+#    Mode   FALSE    TRUE    NA's 
+# logical  491928     389       0 
+rawSailfishCounts <- rawSailfishCounts[, !(colnames(rawSailfishCounts) %in% rRNA)]
+str(rawSailfishCounts) # num [1:24, 1:491928]
 
-# We are only taking column 7 (i.e. estimate numbers of reads) for 
-# downstream DE analysis
-rawSailfishCounts <- cbind(H898C1[,7], H898C2[,7], H898C3[,7], H898C4[,7],
-                           H898G1[,7], H898G2[,7], H898G3[,7], H898G4[,7],
-                           H898W1[,7], H898W2[,7], H898W3[,7], H898W4[,7],
-                           Q903C1[,7], Q903C2[,7], Q903C3[,7], Q903C4[,7],
-                           Q903G1[,7], Q903G2[,7], Q903G3[,7], Q903G4[,7],
-                           Q903W1[,7], Q903W2[,7], Q903W3[,7], Q903W4[,7])
+(n <- ncol(rawSailfishCounts)) # 491928
+test_that("Sailfish output has 491928 rows after rRNA filtering",
+          expect_equal(491928, n))
 
-# All result files from Sailfish are sorted in the same order.  We are 
-# porting the row name from one of the result file to our consolidated 
-# results file
-rownames(rawSailfishCounts) <- H898C1[,1]
+## enact the row / column transposition now
+write.table(t(rawSailfishCounts), "consolidated-Sailfish-results.txt",
+            sep = "\t", quote = FALSE)
+
+## from JB checking she got same data as original
+# library(tools) # md5sum()
+# all.equal(md5sum("bak/consolidated-Sailfish-results-BAK.txt"),
+#           md5sum("consolidated-Sailfish-results.txt"))
+# [1] "Names: 1 string mismatch"
+# presumably this is just the file name mismatch
+# diff'ing in shell turns up no differences
+
+## TO DO: write phenoData
 
 # Simplify column names
 # Demystify Column Names:
@@ -52,18 +83,18 @@ rownames(rawSailfishCounts) <- H898C1[,1]
 # C = Control, G = Gallery, W = Wounding
 #
 # Last number in column name represents the biological replicates.
-#
-colnames(rawSailfishCounts) <- c("H898C1", "H898C2", "H898C3", "H898C4", 
-                                 "H898G1", "H898G2", "H898G3", "H898G4", 
-                                 "H898W1", "H898W2", "H898W3", "H898W4", 
-                                 "Q903C1", "Q903C2", "Q903C3", "Q903C4", 
-                                 "Q903G1", "Q903G2", "Q903G3", "Q903G4", 
-                                 "Q903W1", "Q903W2", "Q903W3", "Q903W4")
 
-# We discovered more ribosomal RNA post-assembly using BLAST.  The following 
-# line removes putaive ribosomal RNA from the table.
-rRNA <- read.table("putativeRibosomalRNA.id", header = FALSE)
-rawSailfishCounts <- rawSailfishCounts[!(rownames(rawSailfishCounts) %in% rRNA[,1]),]
-
-write.table(rawSailfishCounts, "consolidated-Sailfish-results.txt", 
-            quote = FALSE, sep = "\t")
+# Create design matrix
+# targets <- cbind(colnames(rawSailfishCounts))
+# targets <- cbind(targets, c(rep("H898", 12), rep("Q903", 12)))
+# targets <- cbind(targets, rep(c(rep("Control", 4), 
+#                                 rep("Gallery", 4), 
+#                                 rep("Wound", 4)), 2))
+# colnames(targets) <- c("Sample", "Genotype", "Treatment")
+# targets <- as.data.frame(targets)
+# 
+# Genotype <- factor(targets$Genotype, levels=c("H898", "Q903"))
+# Treatment <- factor(targets$Treatment, levels=c("Control", "Gallery", "Wound"))
+# 
+# Group <- factor(interaction(targets$Genotype, targets$Treatment))
+# targets <- cbind(targets, Group=Group)
