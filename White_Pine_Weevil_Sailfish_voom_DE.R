@@ -1,24 +1,35 @@
+library(edgeR)
+library(ggplot2)
+
 ### Differential Expression Analysis on Sitka Spruce Weevil 
 ### Experiment with limma + voom
 
 # Load counts from RSEM
 rawSailfishCounts <- read.table("consolidated-Sailfish-results.txt", header = TRUE)
-
-# Load edgeR library
-library(edgeR)
+str(rawSailfishCounts) # 'data.frame':  491928 obs. of  24 variables:
 
 # Load counts into DGEList object from edgeR package.
 y <- DGEList(counts=rawSailfishCounts)
+str(y)
+dim(y)[1] # 491928
+lib_size <- data.frame(raw = y$samples$lib.size)
 
 # Filtering for low expression genes
 # We are setting an arbitary threshold and only keeping contigs with at least
 # 1 count-per-million (cpm) in at least half of the biological replicates
 # in 1 timepoint (i.e. 2 samples)
 y <- y[(rowSums(cpm(y) > 1) >= 2), ]
+str(y)
+dim(y)[1] # 65609 (down from 491928) ~= we have about 13% of original rows
 
 # Library depth is now changed with the filtering of the low count 
 # contigs so we need to reset the libray depth.
-y$samples$lib.size <- colSums(y$counts)
+(lib_size$filtered <- colSums(y$counts))
+
+p <- ggplot(lib_size, aes(x = raw, y = filtered))
+## TO DO: make this square, with same x and y axis limits, and superpose x = y
+## line
+p + geom_point()
 
 # TMM Normalization by Depth
 y <- calcNormFactors(y)
@@ -54,10 +65,9 @@ cont.matrix <- makeContrasts(
 v <- voom(y, design, plot=TRUE)
 
 # MDS analysis
-plotMDS(linear.v, top=Inf)
+plotMDS(v, top=Inf)
 
 # PCA analysis
-library(ggplot2)
 pca <- as.data.frame(prcomp(t(v$E))$x)
 ggplot(pca, aes(PC1, PC2, color = Group)) + geom_point(size=3) + 
   scale_color_manual(name = "", 
