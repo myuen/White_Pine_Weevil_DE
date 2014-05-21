@@ -1,5 +1,5 @@
-library(testthat)
-library(plyr)
+library(testthat) # facilitate tests that will catch changes on re-analysis
+library(plyr)     ## **ply() and revalue()
 
 # Marshal output files from Sailfish
 jFiles <- list.files("Sailfish-results/", full.names = TRUE)
@@ -72,29 +72,24 @@ write.table(t(rawSailfishCounts), "consolidated-Sailfish-results.txt",
 # presumably this is just the file name mismatch
 # diff'ing in shell turns up no differences
 
-## TO DO: write phenoData
+## write design matrix
 
-# Simplify column names
-# Demystify Column Names:
-# First 4 alphanumeric character represents the susceptible/resistance genotype;
-# H898 = Resistance Genotype; Q903 = Susceptible Genotype
-#
-# Followed by single alphabet for treatment;
-# C = Control, G = Gallery, W = Wounding
-#
-# Last number in column name represents the biological replicates.
+desMat <- data.frame(sample = rownames(rawSailfishCounts),
+                     gTypeCode = factor(substr(rownames(rawSailfishCounts), 1, 4),
+                                        levels = c("Q903", "H898")),
+                     # H898 = Resistance Genotype; Q903 = Susceptible Genotype
+                     gType = factor(NA),
+                     txCode = substr(rownames(rawSailfishCounts), 5, 5),
+                     # C = Control, G = Gallery, W = Wounding
+                     tx = factor(NA),
+                     bioRep = as.numeric(substr(rownames(rawSailfishCounts), 6, 6)))
+desMat$gType <-
+  revalue(desMat$gTypeCode, c('H898' = "res", 'Q903' = "susc"))
+desMat$tx <-
+  revalue(desMat$txCode, c('C' = "Control", 'G' = "Gallery", 'W' = "Wound"))
+desMat$grp <- with(desMat, interaction(gTypeCode, tx))
+desMat
+str(desMat)
 
-# Create design matrix
-# targets <- cbind(colnames(rawSailfishCounts))
-# targets <- cbind(targets, c(rep("H898", 12), rep("Q903", 12)))
-# targets <- cbind(targets, rep(c(rep("Control", 4), 
-#                                 rep("Gallery", 4), 
-#                                 rep("Wound", 4)), 2))
-# colnames(targets) <- c("Sample", "Genotype", "Treatment")
-# targets <- as.data.frame(targets)
-# 
-# Genotype <- factor(targets$Genotype, levels=c("H898", "Q903"))
-# Treatment <- factor(targets$Treatment, levels=c("Control", "Gallery", "Wound"))
-# 
-# Group <- factor(interaction(targets$Genotype, targets$Treatment))
-# targets <- cbind(targets, Group=Group)
+write.table(desMat, "White_Pine_Weevil_design_matrix.tsv",
+            sep = "\t", quote = FALSE, row.names = FALSE)
