@@ -1,57 +1,91 @@
 library(edgeR)
 library(ggplot2)
+library(plyr)
+library(reshape2)
+library(testthat) # facilitate tests that will catch changes on re-analysis
 
 ### Differential Expression Analysis on Sitka Spruce Weevil 
 ### Experiment with limma + voom
 
-# Load counts from RSEM
-rawSailfishCounts <- read.table("consolidated-Sailfish-results.txt", header = TRUE)
+# Load counts from Sailfish
+rawSailfishCounts <- read.delim("consolidated-Sailfish-results.txt")
 str(rawSailfishCounts) # 'data.frame':  491928 obs. of  24 variables:
+test_that("Sailfish data has 491928 rows upon import",
+          expect_equal(491928, nrow(rawSailfishCounts)))
+test_that("Sailfish data has data for exactly 24 samples",
+          expect_equal(24, ncol(rawSailfishCounts)))
+
+# Load design matrix
+desMat <- read.delim("White_Pine_Weevil_design_matrix.tsv", stringsAsFactors = FALSE)
+desMat <-
+  mutate(desMat,
+         gTypeCode = factor(gTypeCode, levels = c("Q903", "H898")),
+         gType = factor(gType, levels = c("susc", "res")),
+         txCode = factor(txCode),
+         tx = factor(tx))
+desMat$grp <-
+  with(desMat, factor(grp,
+                      levels = paste(levels(gTypeCode),
+                                     rep(levels(tx), each = 2), sep = ".")))
+str(desMat) # 'data.frame':  24 obs. of  7 variables:
+test_that("design matrix has 24 rows upon import", expect_equal(24, nrow(desMat)))
 
 # Load counts into DGEList object from edgeR package.
-y <- DGEList(counts=rawSailfishCounts)
-str(y)
-dim(y)[1] # 491928
+y <- DGEList(counts = rawSailfishCounts, group = desMat$grp)
 lib_size <- data.frame(raw = y$samples$lib.size)
 
-# Filtering for low expression genes
+# exploring the phenomenon of low expression
+non_zero_freq <- as.data.frame(with(y, table(rowSums(cpm(y) > 1))))
+names(non_zero_freq) <- c("num.nonzero", "freq")
+non_zero_freq$num.nonzero <-
+  with(non_zero_freq,
+       as.numeric(levels(num.nonzero)[num.nonzero]))
+p <- ggplot(subset(non_zero_freq, num.nonzero > 1),
+            aes(x = as.factor(num.nonzero), y = freq)) +
+  geom_bar(stat = "identity")
+p + coord_flip() + xlab("frequency or number of samples")
+
+# Filtering low expression genes
 # We are setting an arbitary threshold and only keeping contigs with at least
 # 1 count-per-million (cpm) in at least half of the biological replicates
 # in 1 timepoint (i.e. 2 samples)
 y <- y[(rowSums(cpm(y) > 1) >= 2), ]
-str(y)
-dim(y)[1] # 65609 (down from 491928) ~= we have about 13% of original rows
+test_that("After low expression filter, we have 65609 rows",
+          expect_equal(65609, nrow(y)))
+# 65609 (down from 491928) ~= we have about 13% of original rows
 
 # Library depth is now changed with the filtering of the low count 
 # contigs so we need to reset the libray depth.
 (lib_size$filtered <- colSums(y$counts))
 
-p <- ggplot(lib_size, aes(x = raw, y = filtered))
-## TO DO: make this square, with same x and y axis limits, and superpose x = y
-## line
-p + geom_point()
-
 # TMM Normalization by Depth
 y <- calcNormFactors(y)
 
-# Create design matrix
-targets <- cbind(colnames(rawSailfishCounts))
-targets <- cbind(targets, c(rep("H898", 12), rep("Q903", 12)))
-targets <- cbind(targets, rep(c(rep("Control", 4), 
-                                rep("Gallery", 4), 
-                                rep("Wound", 4)), 2))
-colnames(targets) <- c("Sample", "Genotype", "Treatment")
-targets <- as.data.frame(targets)
+# make model matrix
+#modMat <- model.matrix(~ gType/tx - 1, desMat)
+modMat <- model.matrix(~ tx/gType - 1, desMat)
 
-Genotype <- factor(targets$Genotype, levels=c("H898", "Q903"))
-Treatment <- factor(targets$Treatment, levels=c("Control", "Gallery", "Wound"))
+# voom transformation
+v <- voom(y, modMat, plot = TRUE)
 
-Group <- factor(interaction(targets$Genotype, targets$Treatment))
-targets <- cbind(targets, Group=Group)
+# Linear modelling
+fit <- lmFit(v, modMat)
+fit <- eBayes(fit)
+tt <- topTable(fit, coef = grep(":", colnames(modMat)))
+
+data.wide <- cbind(desMat, t(y$counts[rownames(tt)[1:4], ]))
+data.tall <- melt(data.wide,
+                  id.vars = names(desMat),
+                  variable.name = 'contig', value.name = 'Expression')
+str(data.tall)
+
+#x <- data.frame(desMat, gExp = y$counts[rownames(tt)[1], ])
+p <- ggplot(data.tall, aes(x = gType, y = Expression))
+p + geom_point() + facet_grid(tx ~ contig)
 
 # Linear design matrix, simplest approach
-design <- model.matrix(~ 0 + Group)
-colnames(design) <- levels(targets$Group)
+design <- model.matrix(~ 0 + grp, desMat)
+colnames(design) <- levels(desMat$grp)
 
 # Create contrast matrix
 cont.matrix <- makeContrasts(
@@ -62,7 +96,9 @@ cont.matrix <- makeContrasts(
   levels = design)
 
 # Voom transformation
-v <- voom(y, design, plot=TRUE)
+v <- voom(y, modMat, plot = TRUE)
+
+
 
 # MDS analysis
 plotMDS(v, top=Inf)
