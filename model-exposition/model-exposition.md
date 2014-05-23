@@ -44,7 +44,7 @@ The model has 6 parameters, as indeed it must:
 
   * an intercept = expected expression in Q903 susceptible in Control treatment
   * a *main effect* for the H898 susceptible genotype
-  * two *main effects* for the Wound and Control treatments
+  * two *main effects* for the Wound and Gallery treatments
   * two *interaction effects* for the interaction between the H898 genotype and the Wound and Control treatments
 
 Here is some hideous Keynote math showing that the difference between the interaction effects is what I believe what Justin and Mack are interested in when they talk about "induction".
