@@ -30,7 +30,7 @@ Finally let's address the second question of interest, which Justin and Mack oft
 
 As laid out in the above slide, I don't think the contrast Mack was computing in the draft differential expression analysis code really gets at what they want.
 
-Here's my take, which relies on stating the model in a different way:
+Here's my modified proposal:
 
 ![](model-exposition.004.png)
 
