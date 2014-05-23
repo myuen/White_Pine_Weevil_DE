@@ -15,37 +15,49 @@ Let's make this discussion concrete with an example.
 
 ![](model-exposition.001.png)
 
-Goals of the differential expression analysis, in rough order in interest:
+Let's address the first question of interest: within each treatment -- especially in Control --  compare the two genotypes.
 
-  * In the Control condition, compare the susceptible Q903 strain to the resistant H898
-    - Justin has greater interest in "things that are unique in H898", i.e. expression in H898 >> Q903
-  * In each genotype, compare the Wound treatment to the Gallery
-    - Justin has greater interest in "things that are unique to Gallery", i.e. expression under Gallery tx >> Wound tx
-  * For each condition, compare the susceptible Q903 strain to the resistant H898
-    - JB musing: make a scatterplot matrix of these effects?
-  * For each genotype, resistant}, compare treatments
-    - JB musing: again, scatterplot matrix?
+![](model-exposition.002.png)
 
-This contrast defined in Mack's original code conveys what they call "induced", which seems to get at the phenomenon of expression variation in the Gallery condition that is above and beyond changes seen in the Wound condition (expression below presumes a cell means type of parametrization):
+Proposal:
 
-```
-Induced.H898_vs_Q903 = 
-    (H898.Gallery - (H898.Wound - H898.Control)) - 
-    (Q903.Gallery - (Q903.Wound - Q903.Control))
-```
+  * We extract estimated effects and related statistical significance quantities for all three `\alpha_{tx*:gTypeRes}` terms individually and as a group.
+  * Note that Justin has greater interest in "things that are unique in H898", i.e. expression in H898 >> Q903. Suggests it may be useful to sort in a "signed" way instead of strictly on statistical significance, i.e. to put the most interesting contigs at the very beginning and very end of the table, rather than interleaved at the top.
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Finally let's address the second question of interest, which Justin and Mack often call "induction".
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+![](model-exposition.003.png)
 
-```{r}
-summary(cars)
-```
+As laid out in the above slide, I don't think the contrast Mack was computing in the draft differential expression analysis code really gets at what they want.
 
-You can also embed plots, for example:
+Here's my take, which relies on stating the model in a different way:
 
-```{r, echo=FALSE}
-plot(cars)
-```
+![](model-exposition.004.png)
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+I think what they really want to do is to form the difference between Gallery and Wound for each genotype separately and then compare/contrast those differences. The model parametrization used above turns out to not be readily available, so I'd rather obtain the effect of interest another way.
+
+Here is the most standard way to parametrize our model:
+
+![](model-exposition.005.png)
+
+The model has 6 parameters, as indeed it must:
+
+  * an intercept = expected expression in Q903 susceptible in Control treatment
+  * a *main effect* for the H898 susceptible genotype
+  * two *main effects* for the Wound and Control treatments
+  * two *interaction effects* for the interaction between the H898 genotype and the Wound and Control treatments
+
+Here is some hideous Keynote math showing that the difference between the interaction effects is what I believe what Justin and Mack are interested in when they talk about "induction".
+
+![](model-exposition.006.png)
+
+Proposal:
+
+  * We extract estimated effects and related statistical significance quantities for the difference `\alpha_{gTypeRes:Gallery} - \alpha_{gTypeRes:Wound}`.
+  * Note that Justin has greater interest in "things that are unique to Gallery", i.e. expression under Gallery tx >> Wound tx. Suggests it may be useful to sort in a "signed" way instead of strictly on statistical significance, i.e. to put the most interesting contigs at the very beginning and very end of the table, rather than interleaved at the top.
+  
+It might be interesting to make some scatterplot matrices of various effects and contrasts.
+
+Finally, here is another graphic thay may shed light on the model and how different parametrizations pave the way to different comparisons.
+
+![](model-exposition.007.png)
