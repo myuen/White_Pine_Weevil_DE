@@ -11,11 +11,7 @@ From Mack's original email:
 
 "We have 24 RNA-Seq libraries coming from 2 genotypes: Susceptible (S) and Resistance (R), and 3 treatment conditions: Control (C), Gallery (G) and Wound (W), each with biological replicates.  We are interested in comparing: 1) the differential expression for each condition between the genotypes and (e.g. susceptible-gallery vs. resistance-gallery) 2) the differential expression between the treatment condition within the genotypes (e.g. susceptible-gallery vs. susceptible-wound)."
 
-First let me just work out how to link to my own PNGs.
-
-![](https://github.com/myuen/White_Pine_Weevil_DE/blob/master/model-exposition/model-exposition.001.png)
-
-![](../master/model-exposition/model-exposition.001.png)
+Let's make this discussion concrete with an example.
 
 ![](model-exposition.001.png)
 
