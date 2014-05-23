@@ -8,21 +8,22 @@ library(testthat) # facilitate tests that will catch changes on re-analysis
 ### Experiment with limma + voom
 
 # Load counts from Sailfish
-rawSailfishCounts <- read.delim("consolidated-Sailfish-results.txt")
-str(rawSailfishCounts) # 'data.frame':  491928 obs. of  24 variables:
-test_that("Sailfish data has 491928 rows upon import",
-          expect_equal(491928, nrow(rawSailfishCounts)))
+filteredSailfishCounts <- read.delim("consolidated-filtered-Sailfish-results.txt")
+str(filteredSailfishCounts) # 'data.frame':  65609 obs. of  24 variables:
+test_that("filtered Sailfish data has 65609 rows upon import",
+          expect_equal(65609, nrow(filteredSailfishCounts)))
 test_that("Sailfish data has data for exactly 24 samples",
-          expect_equal(24, ncol(rawSailfishCounts)))
+          expect_equal(24, ncol(filteredSailfishCounts)))
 
 # Load design matrix
-desMat <- read.delim("White_Pine_Weevil_design_matrix.tsv", stringsAsFactors = FALSE)
+desMat <- read.delim("White_Pine_Weevil_design_matrix.tsv",
+                     stringsAsFactors = FALSE)
 desMat <-
   mutate(desMat,
          gTypeCode = factor(gTypeCode, levels = c("Q903", "H898")),
-         gType = factor(gType, levels = c("susc", "res")),
-         txCode = factor(txCode),
-         tx = factor(tx))
+         gType = factor(gType, levels = c("Susc", "Res")),
+         txCode = factor(txCode, levels = c('C', 'W', 'G')),
+         tx = factor(tx, levels = c("Control", "Wound", "Gallery")))
 desMat$grp <-
   with(desMat, factor(grp,
                       levels = paste(levels(gTypeCode),
@@ -31,32 +32,7 @@ str(desMat) # 'data.frame':  24 obs. of  7 variables:
 test_that("design matrix has 24 rows upon import", expect_equal(24, nrow(desMat)))
 
 # Load counts into DGEList object from edgeR package.
-y <- DGEList(counts = rawSailfishCounts, group = desMat$grp)
-lib_size <- data.frame(raw = y$samples$lib.size)
-
-# exploring the phenomenon of low expression
-non_zero_freq <- as.data.frame(with(y, table(rowSums(cpm(y) > 1))))
-names(non_zero_freq) <- c("num.nonzero", "freq")
-non_zero_freq$num.nonzero <-
-  with(non_zero_freq,
-       as.numeric(levels(num.nonzero)[num.nonzero]))
-p <- ggplot(subset(non_zero_freq, num.nonzero > 1),
-            aes(x = as.factor(num.nonzero), y = freq)) +
-  geom_bar(stat = "identity")
-p + coord_flip() + xlab("frequency or number of samples")
-
-# Filtering low expression genes
-# We are setting an arbitary threshold and only keeping contigs with at least
-# 1 count-per-million (cpm) in at least half of the biological replicates
-# in 1 timepoint (i.e. 2 samples)
-y <- y[(rowSums(cpm(y) > 1) >= 2), ]
-test_that("After low expression filter, we have 65609 rows",
-          expect_equal(65609, nrow(y)))
-# 65609 (down from 491928) ~= we have about 13% of original rows
-
-# Library depth is now changed with the filtering of the low count 
-# contigs so we need to reset the libray depth.
-(lib_size$filtered <- colSums(y$counts))
+y <- DGEList(counts = filteredSailfishCounts, group = desMat$grp)
 
 # TMM Normalization by Depth
 y <- calcNormFactors(y)
@@ -64,6 +40,7 @@ y <- calcNormFactors(y)
 # make model matrix
 #modMat <- model.matrix(~ gType/tx - 1, desMat)
 modMat <- model.matrix(~ tx/gType - 1, desMat)
+modMat <- model.matrix(~ gType * tx, desMat)
 
 # voom transformation
 v <- voom(y, modMat, plot = TRUE)
@@ -71,6 +48,7 @@ v <- voom(y, modMat, plot = TRUE)
 # Linear modelling
 fit <- lmFit(v, modMat)
 fit <- eBayes(fit)
+
 tt <- topTable(fit, coef = grep(":", colnames(modMat)))
 
 data.wide <- cbind(desMat, t(y$counts[rownames(tt)[1:4], ]))
