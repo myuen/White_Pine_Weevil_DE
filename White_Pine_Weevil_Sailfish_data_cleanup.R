@@ -79,14 +79,14 @@ desMat <- data.frame(sample = rownames(rawSailfishCounts),
                                         levels = c("Q903", "H898")),
                      # H898 = Resistance Genotype; Q903 = Susceptible Genotype
                      gType = factor(NA),
-                     txCode = substr(rownames(rawSailfishCounts), 5, 5),
-                     # C = Control, G = Gallery, W = Wounding
+                     txCode = factor(substr(rownames(rawSailfishCounts), 5, 5),
+                                     levels = c('C', 'W', 'G')),
+                     # C = Control, W = Wounding, G = Gallery 
                      tx = factor(NA),
                      bioRep = as.numeric(substr(rownames(rawSailfishCounts), 6, 6)))
-desMat$gType <-
-  revalue(desMat$gTypeCode, c('H898' = "res", 'Q903' = "susc"))
+desMat$gType <- revalue(desMat$gTypeCode, c('H898' = "Res", 'Q903' = "Susc"))
 desMat$tx <-
-  revalue(desMat$txCode, c('C' = "Control", 'G' = "Gallery", 'W' = "Wound"))
+  revalue(desMat$txCode, c('C' = "Control", 'W' = "Wound", 'G' = "Gallery"))
 desMat$grp <- with(desMat, interaction(gTypeCode, tx))
 desMat
 str(desMat)
