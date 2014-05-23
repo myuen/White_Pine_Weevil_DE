@@ -34,7 +34,7 @@ Here's my take, which relies on stating the model in a different way:
 
 ![](model-exposition.004.png)
 
-I think what they really want to do is to form the difference between Gallery and Wound for each genotype separately and then compare/contrast those differences. The model parametrization used above turns out to not be readily available, so I'd rather obtain the effect of interest another way.
+I think what they really want is to form the difference between Gallery and Wound for each genotype separately and then compare/contrast those differences. The model parametrization used above turns out to not be readily available, so I'd rather obtain the effect of interest another way.
 
 Here is the most standard way to parametrize our model:
 
@@ -53,7 +53,7 @@ Here is some hideous Keynote math showing that the difference between the intera
 
 Proposal:
 
-  * We extract estimated effects and related statistical significance quantities for the difference `\alpha_{gTypeRes:Gallery} - \alpha_{gTypeRes:Wound}`.
+  * We extract estimated effects and related statistical significance quantities for the difference `\beta_{gTypeRes:Gallery} - \beta_{gTypeRes:Wound}`.
   * Note that Justin has greater interest in "things that are unique to Gallery", i.e. expression under Gallery tx >> Wound tx. Suggests it may be useful to sort in a "signed" way instead of strictly on statistical significance, i.e. to put the most interesting contigs at the very beginning and very end of the table, rather than interleaved at the top.
   
 It might be interesting to make some scatterplot matrices of various effects and contrasts.
