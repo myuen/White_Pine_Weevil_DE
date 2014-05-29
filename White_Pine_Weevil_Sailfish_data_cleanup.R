@@ -20,7 +20,7 @@ tmp <- read.table(jFiles[1], row.names = 1,
                   colClasses = rep(c("character", "numeric"), c(1, 6)))
 (n <- nrow(tmp)) # 492317
 jRowNames <- rownames(tmp)
-test_that("First Sailfish output files has 492317 rows",
+test_that("First Sailfish output file has 492317 rows",
           expect_equal(492317, n))
 
 ## Read in all Sailfish data
@@ -74,22 +74,21 @@ write.table(t(rawSailfishCounts), "consolidated-Sailfish-results.txt",
 
 ## write design matrix
 
-desMat <- data.frame(sample = rownames(rawSailfishCounts),
-                     gTypeCode = factor(substr(rownames(rawSailfishCounts), 1, 4),
+expDes <- data.frame(sample = rownames(rawSailfishCounts),
+                     gType = factor(substr(rownames(rawSailfishCounts), 1, 4),
                                         levels = c("Q903", "H898")),
-                     # H898 = Resistance Genotype; Q903 = Susceptible Genotype
-                     gType = factor(NA),
                      txCode = factor(substr(rownames(rawSailfishCounts), 5, 5),
                                      levels = c('C', 'W', 'G')),
                      # C = Control, W = Wounding, G = Gallery 
                      tx = factor(NA),
                      bioRep = as.numeric(substr(rownames(rawSailfishCounts), 6, 6)))
-desMat$gType <- revalue(desMat$gTypeCode, c('H898' = "Res", 'Q903' = "Susc"))
-desMat$tx <-
-  revalue(desMat$txCode, c('C' = "Control", 'W' = "Wound", 'G' = "Gallery"))
-desMat$grp <- with(desMat, interaction(gTypeCode, tx))
-desMat
-str(desMat)
+expDes$gType <- # H898 = Resistance Genotype; Q903 = Susceptible Genotype
+  revalue(expDes$gType, c('H898' = "H898res", 'Q903' = "Q903susc"))
+expDes$tx <-
+  revalue(expDes$txCode, c('C' = "Control", 'W' = "Wound", 'G' = "Gallery"))
+expDes$grp <- with(expDes, interaction(gType, tx))
+expDes
+str(expDes)
 
-write.table(desMat, "White_Pine_Weevil_design_matrix.tsv",
+write.table(expDes, "White_Pine_Weevil_exp_design.tsv",
             sep = "\t", quote = FALSE, row.names = FALSE)
