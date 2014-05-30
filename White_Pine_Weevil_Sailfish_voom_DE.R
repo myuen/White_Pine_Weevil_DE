@@ -10,7 +10,7 @@ library(testthat) # facilitate tests that will catch changes on re-analysis
 # Load counts from Sailfish
 filteredSailfishCounts <- # take a few moments
   read.delim("consolidated-filtered-Sailfish-results.txt")
-str(filteredSailfishCounts) # 'data.frame':  65609 obs. of  24 variables:
+str(filteredSailfishCounts, list.len = 8)
 test_that("filtered Sailfish data has 65609 rows upon import",
           expect_equal(65609, nrow(filteredSailfishCounts)))
 test_that("Sailfish data has data for exactly 24 samples",
@@ -39,79 +39,71 @@ y <- DGEList(counts = filteredSailfishCounts, group = expDes$grp)
 y <- calcNormFactors(y)
 
 # make model matrix
-#modMat <- model.matrix(~ tx/gType - 1, expDes)
-modMat <- model.matrix(~ gType * tx, expDes)
+#modMat_main <- model.matrix(~ tx/gType - 1, expDes)
+modMat_main_main <- model.matrix(~ gType * tx, expDes)
 
-# not sure why this is necessary but I do it to please makeContrasts
-colnames(modMat) <- gsub(":", ".", colnames(modMat))
+# hard to believe, but the default names for columns associated with interaction
+# terms will create fatal errors in makeContrasts below; prevent that, and a
+# warning about the intercept, by modifying these column names here; see
+# White_Pine_Weevil_Sailfish_limm-model-term-name-fiasco.R and .md for more
+colnames(modMat_main)
+colnames(modMat_main) <- gsub(":", "_", colnames(modMat_main))
+colnames(modMat_main) <- gsub("[()]", "", colnames(modMat_main))
+colnames(modMat_main)
 
 # voom transformation
-v <- voom(y, modMat, plot = TRUE) # take a couple moments
+v <- voom(y, modMat_main, plot = TRUE) # take a couple moments
 
 # Linear modelling
-fit <- lmFit(v, modMat)
-fit2 <- eBayes(fit)
-
-# get inferential info on each interaction effect on its own
-tt_gTypeH898res.txWound <-
-  topTable(fit2, coef = grep("gTypeH898res.txWound", colnames(modMat)))
-head(tt_gTypeH898res.txWound)
-
-tt_gTypeH898res.txGallery <-
-  topTable(fit2, coef = grep("gTypeH898res.txGallery", colnames(modMat)))
-head(tt_gTypeH898res.txGallery)
-
-# create contrast matrix to take difference of interaction terms
+fit <- lmFit(v, modMat_main)
 cont_matrix <-
-  makeContrasts(gTypeH898res.txGallery - gTypeH898res.txWound,
-                levels = modMat)
-fit3 <- contrasts.fit(fit, cont_matrix)
-fit4 <- eBayes(fit3)
-tt_diff_interactions <- topTable(fit4, coef = 1)
-head(tt)
+  makeContrasts(Intercept, gTypeH898res, txWound, txGallery,
+                gTypeH898res_txWound, gTypeH898res_txGallery,
+                weevil = gTypeH898res_txGallery - gTypeH898res_txWound,
+                wound = gTypeH898res + gTypeH898res_txWound,
+                gallery = gTypeH898res + gTypeH898res_txGallery,
+                levels = modMat_main)
+fit2 <- contrasts.fit(fit, cont_matrix)
+fit3 <- eBayes(fit2)
 
-## I AM JUST ABOVE HERE
-## STILL NOT SATISFIED WITH EXTRACTION OF INFERENCE RE: DIFFERENCE OF THE INTERACTION TERMS
+# get inferential summary for the six terms in the model
 
-## CODE BELOW HERE NOT FRESHED RECENTLY
-## SOME WRITTEN BY ME, SOME FRAGMENTS LEFT FROM MACK THAT I MIGHT WANT TO REVIVE
+# to get individual t statistics, etc., must use topTable() on each coef
+# separately
+model_terms <- colnames(modMat_main)
+names(model_terms) <- model_terms
+statInf_model_terms <-
+  adply(model_terms, 1,
+        function(x) name_rows(topTable(fit3, coef = x,
+                                       number = Inf,sort.by = "none")))
+statInf_model_terms <-
+  rename(statInf_model_terms, c(X1 = "model_term", .rownames = "contig"))
+statInf_model_terms <-
+  statInf_model_terms[ ,c("contig", setdiff(names(statInf_model_terms),"contig"))]
+head(statInf_model_terms)
+str(statInf_model_terms)
+write.table(statInf_model_terms,
+            "limma-results-model-terms.tsv",
+            quote = FALSE, sep = "\t", row.names = FALSE)
 
-data.wide <- cbind(expDes, t(y$counts[rownames(tt)[1:4], ]))
-data.tall <- melt(data.wide,
-                  id.vars = names(expDes),
-                  variable.name = 'contig', value.name = 'Expression')
-str(data.tall)
+# get inferential summary for the effects we are most interested in
 
-#x <- data.frame(expDes, gExp = y$counts[rownames(tt)[1], ])
-p <- ggplot(data.tall, aes(x = gType, y = Expression))
-p + geom_point() + facet_grid(tx ~ contig)
+# below, we will rename gTypeH898res to control, to be parallel with would and
+# gallery
+focus_terms <- c("weevil", "gTypeH898res", "wound", "gallery")
+names(focus_terms) <- focus_terms
+statInf_focus_terms <-
+  adply(focus_terms, 1,
+        function(x) name_rows(topTable(fit3, coef = x,
+                                       number = Inf, sort.by = "none")))
+statInf_focus_terms <-
+  rename(statInf_focus_terms, c(X1 = "focus_term", .rownames = "contig"))
+statInf_focus_terms <-
+  statInf_focus_terms[ , c("contig",
+                           setdiff(names(statInf_focus_terms),"contig"))]
+head(statInf_focus_terms)
+str(statInf_focus_terms)
+write.table(statInf_model_terms,
+            "limma-results-focus-terms.tsv",
+            quote = FALSE, sep = "\t", row.names = FALSE)
 
-
-# MDS analysis
-plotMDS(v, top=Inf)
-
-# PCA analysis
-pca <- as.data.frame(prcomp(t(v$E))$x)
-ggplot(pca, aes(PC1, PC2, color = Group)) + geom_point(size=3) + 
-  scale_color_manual(name = "", 
-                     values=c("H898.Control" = "#4d004b", 
-                              "H898.Gallery" = "#88419d", 
-                              "H898.Wound" = "#8c96c6", 
-                              "Q903.Control" = "#7F0000", 
-                              "Q903.Gallery" =  "#d7301f", 
-                              "Q903.Wound" = "#fc8d59")) + 
-  labs(title="Voom + Limma Principal Component Analysis") + theme_bw()
-
-
-linear.results <- decideTests(fit2, method="global", 
-                              adjust.method="fdr", p.value=0.01)
-
-summary(linear.results)
-
-###
-
-vennDiagram(linear.results, include="both")
-vennDiagram(linear.results, include="up")
-vennDiagram(linear.results, include="down")
-
-###
