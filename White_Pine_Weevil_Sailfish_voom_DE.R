@@ -39,30 +39,34 @@ y <- DGEList(counts = filteredSailfishCounts, group = expDes$grp)
 y <- calcNormFactors(y)
 
 # make model matrix
-#modMat_main <- model.matrix(~ tx/gType - 1, expDes)
-modMat_main_main <- model.matrix(~ gType * tx, expDes)
+modMat <- model.matrix(~ gType * tx, expDes)
+
+# I never needed to fit the model with this parametrization. Instead I got the
+# effects of interests from the main parametrization and specific contrasts
+# specifed below.
+#modMat <- model.matrix(~ tx/gType - 1, expDes)
 
 # hard to believe, but the default names for columns associated with interaction
 # terms will create fatal errors in makeContrasts below; prevent that, and a
 # warning about the intercept, by modifying these column names here; see
 # White_Pine_Weevil_Sailfish_limm-model-term-name-fiasco.R and .md for more
-colnames(modMat_main)
-colnames(modMat_main) <- gsub(":", "_", colnames(modMat_main))
-colnames(modMat_main) <- gsub("[()]", "", colnames(modMat_main))
-colnames(modMat_main)
+colnames(modMat)
+colnames(modMat) <- gsub(":", "_", colnames(modMat))
+colnames(modMat) <- gsub("[()]", "", colnames(modMat))
+colnames(modMat)
 
 # voom transformation
-v <- voom(y, modMat_main, plot = TRUE) # take a couple moments
+v <- voom(y, modMat, plot = TRUE) # take a couple moments
 
 # Linear modelling
-fit <- lmFit(v, modMat_main)
+fit <- lmFit(v, modMat)
 cont_matrix <-
   makeContrasts(Intercept, gTypeH898res, txWound, txGallery,
                 gTypeH898res_txWound, gTypeH898res_txGallery,
                 weevil = gTypeH898res_txGallery - gTypeH898res_txWound,
                 wound = gTypeH898res + gTypeH898res_txWound,
                 gallery = gTypeH898res + gTypeH898res_txGallery,
-                levels = modMat_main)
+                levels = modMat)
 fit2 <- contrasts.fit(fit, cont_matrix)
 fit3 <- eBayes(fit2)
 
@@ -70,7 +74,7 @@ fit3 <- eBayes(fit2)
 
 # to get individual t statistics, etc., must use topTable() on each coef
 # separately
-model_terms <- colnames(modMat_main)
+model_terms <- colnames(modMat)
 names(model_terms) <- model_terms
 statInf_model_terms <-
   adply(model_terms, 1,
@@ -82,6 +86,14 @@ statInf_model_terms <-
   statInf_model_terms[ ,c("contig", setdiff(names(statInf_model_terms),"contig"))]
 head(statInf_model_terms)
 str(statInf_model_terms)
+
+## informal tests so we know if things change, differ for Jenny vs Mack, etc.
+test_that("stat inf on the model terms has 393654 rows",
+          expect_equal(393654, nrow(statInf_model_terms)))
+(t_medians <- aggregate(t ~ model_term, statInf_model_terms, median))
+all.equal(t_medians$t, c(1.118479141, 0.157361758, 0.092882336,
+                         0.026698663, -0.067348886, 0.005007678))
+
 write.table(statInf_model_terms,
             "limma-results-model-terms.tsv",
             quote = FALSE, sep = "\t", row.names = FALSE)
@@ -98,12 +110,23 @@ statInf_focus_terms <-
                                        number = Inf, sort.by = "none")))
 statInf_focus_terms <-
   rename(statInf_focus_terms, c(X1 = "focus_term", .rownames = "contig"))
+statInf_focus_terms$focus_term <-
+  revalue(statInf_focus_terms$focus_term, c(gTypeH898res = "control"))
+
 statInf_focus_terms <-
   statInf_focus_terms[ , c("contig",
                            setdiff(names(statInf_focus_terms),"contig"))]
 head(statInf_focus_terms)
 str(statInf_focus_terms)
-write.table(statInf_model_terms,
+
+## informal tests so we know if things change, differ for Jenny vs Mack, etc.
+test_that("stat inf on the focus terms has 262436 rows",
+          expect_equal(262436, nrow(statInf_focus_terms)))
+(t_medians <- aggregate(t ~ focus_term, statInf_focus_terms, median))
+all.equal(t_medians$t, c(0.04817940, 0.157361758, 0.01198738, 0.10723831))
+# "Mean relative difference: 2.508257e-08" <-- that's OK!
+
+write.table(statInf_focus_terms,
             "limma-results-focus-terms.tsv",
             quote = FALSE, sep = "\t", row.names = FALSE)
 
