@@ -101,3 +101,5 @@ fit3 <- eBayes(fit2)
 #' Pull out top hits for our term of interest
 tt_diff_interactions <- topTable(fit3, coef = "weevil")
 head(tt_diff_interactions)
+
+sessionInfo()

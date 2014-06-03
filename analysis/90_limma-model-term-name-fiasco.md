@@ -252,3 +252,25 @@ head(tt_diff_interactions)
 ## WPW_Inoculation_Trinity_C500_comp435469_c0_seq11 7.199e-09 4.723e-05 10.29
 ```
 
+```r
+sessionInfo()
+```
+
+```
+## R version 3.1.0 (2014-04-10)
+## Platform: x86_64-apple-darwin10.8.0 (64-bit)
+## 
+## locale:
+## [1] C
+## 
+## attached base packages:
+## [1] methods   stats     graphics  grDevices utils     datasets  base     
+## 
+## other attached packages:
+## [1] testthat_0.8.1 edgeR_3.4.2    limma_3.18.13 
+## 
+## loaded via a namespace (and not attached):
+## [1] digest_0.6.4   evaluate_0.5.5 formatR_0.10   knitr_1.5.33  
+## [5] stringr_0.6.2  tools_3.1.0
+```
+
