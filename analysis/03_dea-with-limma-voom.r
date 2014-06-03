@@ -7,33 +7,26 @@ library(testthat) # facilitate tests that will catch changes on re-analysis
 ### Differential Expression Analysis on Sitka Spruce Weevil 
 ### Experiment with limma + voom
 
+#' Source purpose-built functions to load and validate the data, the
+#' experimental design, and the statistical inference results for our focus
+#' terms. Then call them.
+source("helper01_load-counts.r")
+source("helper02_load-exp-des.r")
+
 # Load counts from Sailfish
-filteredSailfishCounts <- # take a few moments
-  read.delim("../data/consolidated-filtered-Sailfish-results.txt")
-str(filteredSailfishCounts, list.len = 8)
-test_that("filtered Sailfish data has 65609 rows upon import",
-          expect_equal(65609, nrow(filteredSailfishCounts)))
-test_that("Sailfish data has data for exactly 24 samples",
-          expect_equal(24, ncol(filteredSailfishCounts)))
+x <- load_counts() # takes a few moments
+str(x, list.len = 8) # 'data.frame':  65609 obs. of  24 variables:
 
 # Load experimental design
-expDes <- read.delim("../data/White_Pine_Weevil_exp_design.tsv",
-                     stringsAsFactors = FALSE)
-expDes <-
-  mutate(expDes,
-         gType = factor(gType, levels = c("Q903susc", "H898res")),
-         txCode = factor(txCode, levels = c('C', 'W', 'G')),
-         tx = factor(tx, levels = c("Control", "Wound", "Gallery")))
+expDes <- load_expDes()
 expDes$grp <-
   with(expDes, factor(grp,
                       levels = paste(levels(gType),
                                      rep(levels(tx), each = 2), sep = ".")))
 str(expDes) # 'data.frame':  24 obs. of  6 variables:
-test_that("design matrix has 24 rows upon import",
-          expect_equal(24, nrow(expDes)))
 
 # Load counts into DGEList object from edgeR package.
-y <- DGEList(counts = filteredSailfishCounts, group = expDes$grp)
+y <- DGEList(counts = x, group = expDes$grp)
 
 # TMM Normalization by Depth
 y <- calcNormFactors(y)
