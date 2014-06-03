@@ -1,33 +1,19 @@
 
 
 
+Source purpose-built functions to load and validate the data and the 
+experimental design. Then call them.
 
-This report was automatically generated with the R package **knitr**
-(version 1.5.33).
-
-
-```r
-library(edgeR)
-```
-
-```
-## Loading required package: limma
-```
 
 ```r
-library(plyr)
-library(testthat) # facilitate tests that will catch changes on re-analysis
-
-### Differential Expression Analysis on Sitka Spruce Weevil 
-### Experiment with limma + voom
-
-#' Source purpose-built functions to load and validate the data, the
-#' experimental design, and the statistical inference results for our focus
-#' terms. Then call them.
 source("helper01_load-counts.r")
 source("helper02_load-exp-des.r")
+```
 
-# Load counts from Sailfish
+Load counts from Sailfish
+
+
+```r
 x <- load_counts() # takes a few moments
 str(x, list.len = 8) # 'data.frame':  65609 obs. of  24 variables:
 ```
@@ -45,10 +31,12 @@ str(x, list.len = 8) # 'data.frame':  65609 obs. of  24 variables:
 ##   [list output truncated]
 ```
 
+Load experimental design
+
+
 ```r
-# Load experimental design
 expDes <- load_expDes()
-expDes$grp <-
+expDes$grp <- # not really sure that we need this?
   with(expDes, factor(grp,
                       levels = paste(levels(gType),
                                      rep(levels(tx), each = 2), sep = ".")))
@@ -65,25 +53,39 @@ str(expDes) # 'data.frame':  24 obs. of  6 variables:
 ##  $ grp   : Factor w/ 6 levels "Q903susc.Control",..: 2 2 2 2 6 6 6 6 4 4 ...
 ```
 
+Load counts into DGEList object from edgeR package.
+
+
 ```r
-# Load counts into DGEList object from edgeR package.
 y <- DGEList(counts = x, group = expDes$grp)
+```
 
-# TMM Normalization by Depth
+TMM Normalization by Depth
+
+
+```r
 y <- calcNormFactors(y)
+```
 
-# make model matrix
+make model matrix
+
+
+```r
 modMat <- model.matrix(~ gType * tx, expDes)
 
 # I never needed to fit the model with this parametrization. Instead I got the
 # effects of interests from the main parametrization and specific contrasts
 # specifed below.
 #modMat <- model.matrix(~ tx/gType - 1, expDes)
+```
 
-# hard to believe, but the default names for columns associated with interaction
-# terms will create fatal errors in makeContrasts below; prevent that, and a
-# warning about the intercept, by modifying these column names here; see
-# White_Pine_Weevil_Sailfish_limm-model-term-name-fiasco.R and .md for more
+It's hard to believe, but the default names for columns associated with 
+interaction terms will create fatal errors in makeContrasts below; prevent 
+that, and a warning about the intercept, by modifying these column names 
+here; see 90_limma-model-term-name-fiasco.r and .md for more
+
+
+```r
 colnames(modMat)
 ```
 
@@ -105,20 +107,19 @@ colnames(modMat)
 ## [5] "gTypeH898res_txWound"   "gTypeH898res_txGallery"
 ```
 
+voom transformation
+
+
 ```r
-# voom transformation
-pdf("figure/03_dea-with-limma-voom_voom-plot.pdf")
 v <- voom(y, modMat, plot = TRUE) # take a couple moments
-dev.off()
 ```
 
-```
-## pdf 
-##   2
-```
+![plot of chunk voom-plot](figure/03-dea-with-limma-voom-voom-plot.png) 
+
+Linear modelling and forming contrasts
+
 
 ```r
-# Linear modelling
 fit <- lmFit(v, modMat)
 cont_matrix <-
   makeContrasts(Intercept, gTypeH898res, txWound, txGallery,
@@ -129,11 +130,14 @@ cont_matrix <-
                 levels = modMat)
 fit2 <- contrasts.fit(fit, cont_matrix)
 fit3 <- eBayes(fit2)
+```
 
-# get inferential summary for the six terms in the model
+get inferential summary for the six terms in the model
+to get individual t statistics, etc., must use topTable() on each coef
+separately
 
-# to get individual t statistics, etc., must use topTable() on each coef
-# separately
+
+```r
 model_terms <- colnames(modMat)
 names(model_terms) <- model_terms
 statInf_model_terms <-
@@ -143,7 +147,8 @@ statInf_model_terms <-
 statInf_model_terms <-
   rename(statInf_model_terms, c(X1 = "model_term", .rownames = "contig"))
 statInf_model_terms <-
-  statInf_model_terms[ ,c("contig", setdiff(names(statInf_model_terms),"contig"))]
+  statInf_model_terms[ ,c("contig",
+                          setdiff(names(statInf_model_terms),"contig"))]
 head(statInf_model_terms)
 ```
 
@@ -180,8 +185,10 @@ str(statInf_model_terms)
 ##  $ B         : num  57.85 -6.56 -5.57 28.8 -6.8 ...
 ```
 
+informal tests so we know if things change, differ for Jenny vs Mack, etc.
+
+
 ```r
-## informal tests so we know if things change, differ for Jenny vs Mack, etc.
 test_that("stat inf on the model terms has 393654 rows",
           expect_equal(393654, nrow(statInf_model_terms)))
 (t_medians <- aggregate(t ~ model_term, statInf_model_terms, median))
@@ -210,8 +217,12 @@ all.equal(t_medians$t, c(1.118479141, 0.157361758, 0.092882336,
 write.table(statInf_model_terms,
             "../results/limma-results-model-terms.tsv",
             quote = FALSE, sep = "\t", row.names = FALSE)
+```
 
-# get inferential summary for the effects we are most interested in
+get inferential summary for the effects we are most interested in
+
+
+```r
 focus_patterns <-
   c("weevil", "gTypeH898res", "^gTypeH898res$", "wound", "gallery")
 focus_terms <-
@@ -224,9 +235,13 @@ statInf_focus_terms <-
                                        coef = grep(x, colnames(coef(fit3))),
                                        number = Inf, sort.by = "none")))
 names(statInf_focus_terms) <- focus_terms
+```
 
-#' I must massage these results before I can rbind them
-#' Must address fact that they don't have exactly the same variables
+I must massage these results before I can rbind them
+Must address fact that they don't have exactly the same variables
+
+
+```r
 var_names <- unique(unlist(llply(statInf_focus_terms, names)))
 ldply(statInf_focus_terms, function(x) {
   y <- var_names %in% names(x)
@@ -250,14 +265,20 @@ ldply(statInf_focus_terms, function(x) {
 ## 5      TRUE        FALSE                FALSE                  FALSE FALSE
 ```
 
+get rid of the three separate estimates in the case where we are testing for
+equality with zero for three terms at once
+
+
 ```r
-#' get rid of the three separate estimates in the case where we are testing for
-#' equality with zero for three terms at once
 statInf_focus_terms$gTypeH898res_all <-
   subset(statInf_focus_terms$gTypeH898res_all,
          select = -c(gTypeH898res, gTypeH898res_txWound, gTypeH898res_txGallery))
+```
 
-#' rbind them
+rbind them
+
+
+```r
 statInf_focus_terms <- ldply(statInf_focus_terms, function(x) x)
 statInf_focus_terms <-
   rename(statInf_focus_terms, c(X1 = "focus_term", .rownames = "contig"))
@@ -291,8 +312,10 @@ summary(statInf_focus_terms)
 ##                     NA's   :262436
 ```
 
+rearrange the variables
+
+
 ```r
-#' rearrange the variables
 vars_in_order <- c("contig", "focus_term", "logFC", "AveExpr",
                    "t", "F", "P.Value", "adj.P.Val", "B")
 statInf_focus_terms <- statInf_focus_terms[vars_in_order]
@@ -333,8 +356,10 @@ str(statInf_focus_terms)
 ##  $ B         : num  -4.24 -6.05 -3.88 -6.6 -5.91 ...
 ```
 
+informal tests so we know if things change, differ for Jenny vs Mack, etc.
+
+
 ```r
-## informal tests so we know if things change, differ for Jenny vs Mack, etc.
 test_that("stat inf on the focus terms has 328045 rows",
           expect_equal(328045, nrow(statInf_focus_terms)))
 (t_medians <- aggregate(t ~ focus_term, statInf_focus_terms, median))
@@ -362,39 +387,5 @@ all.equal(t_medians$t, c(0.04817940, 0.157361758, 0.01198738, 0.10723831))
 write.table(statInf_focus_terms,
             "../results/limma-results-focus-terms.tsv",
             quote = FALSE, sep = "\t", row.names = FALSE)
-```
-
-The R session information (including the OS info, R version and all
-packages used):
-
-
-```r
-sessionInfo()
-```
-
-```
-## R version 3.1.0 (2014-04-10)
-## Platform: x86_64-apple-darwin10.8.0 (64-bit)
-## 
-## locale:
-## [1] C
-## 
-## attached base packages:
-## [1] methods   stats     graphics  grDevices utils     datasets  base     
-## 
-## other attached packages:
-## [1] testthat_0.8.1 plyr_1.8.1     edgeR_3.4.2    limma_3.18.13 
-## 
-## loaded via a namespace (and not attached):
-## [1] Rcpp_0.11.1    digest_0.6.4   evaluate_0.5.5 formatR_0.10  
-## [5] knitr_1.5.33   stringr_0.6.2  tools_3.1.0
-```
-
-```r
-Sys.time()
-```
-
-```
-## [1] "2014-06-03 14:30:49 PDT"
 ```
 

@@ -1,3 +1,7 @@
+#+ setup, include = FALSE
+library(knitr)
+opts_chunk$set(fig.path = 'figure/03-dea-with-limma-voom-')
+
 library(edgeR)
 library(plyr)
 library(testthat) # facilitate tests that will catch changes on re-analysis
@@ -5,31 +9,30 @@ library(testthat) # facilitate tests that will catch changes on re-analysis
 ### Differential Expression Analysis on Sitka Spruce Weevil 
 ### Experiment with limma + voom
 
-#' Source purpose-built functions to load and validate the data, the
-#' experimental design, and the statistical inference results for our focus
-#' terms. Then call them.
+#' Source purpose-built functions to load and validate the data and the 
+#' experimental design. Then call them.
 source("helper01_load-counts.r")
 source("helper02_load-exp-des.r")
 
-# Load counts from Sailfish
+#' Load counts from Sailfish
 x <- load_counts() # takes a few moments
 str(x, list.len = 8) # 'data.frame':  65609 obs. of  24 variables:
 
-# Load experimental design
+#' Load experimental design
 expDes <- load_expDes()
-expDes$grp <-
+expDes$grp <- # not really sure that we need this?
   with(expDes, factor(grp,
                       levels = paste(levels(gType),
                                      rep(levels(tx), each = 2), sep = ".")))
 str(expDes) # 'data.frame':  24 obs. of  6 variables:
 
-# Load counts into DGEList object from edgeR package.
+#' Load counts into DGEList object from edgeR package.
 y <- DGEList(counts = x, group = expDes$grp)
 
-# TMM Normalization by Depth
+#' TMM Normalization by Depth
 y <- calcNormFactors(y)
 
-# make model matrix
+#' make model matrix
 modMat <- model.matrix(~ gType * tx, expDes)
 
 # I never needed to fit the model with this parametrization. Instead I got the
@@ -37,21 +40,20 @@ modMat <- model.matrix(~ gType * tx, expDes)
 # specifed below.
 #modMat <- model.matrix(~ tx/gType - 1, expDes)
 
-# hard to believe, but the default names for columns associated with interaction
-# terms will create fatal errors in makeContrasts below; prevent that, and a
-# warning about the intercept, by modifying these column names here; see
-# White_Pine_Weevil_Sailfish_limm-model-term-name-fiasco.R and .md for more
+#' It's hard to believe, but the default names for columns associated with 
+#' interaction terms will create fatal errors in makeContrasts below; prevent 
+#' that, and a warning about the intercept, by modifying these column names 
+#' here; see 90_limma-model-term-name-fiasco.r and .md for more
 colnames(modMat)
 colnames(modMat) <- gsub(":", "_", colnames(modMat))
 colnames(modMat) <- gsub("[()]", "", colnames(modMat))
 colnames(modMat)
 
-# voom transformation
-pdf("figure/03_dea-with-limma-voom_voom-plot.pdf")
+#' voom transformation
+#+ voom-plot
 v <- voom(y, modMat, plot = TRUE) # take a couple moments
-dev.off()
 
-# Linear modelling
+#' Linear modelling and forming contrasts
 fit <- lmFit(v, modMat)
 cont_matrix <-
   makeContrasts(Intercept, gTypeH898res, txWound, txGallery,
@@ -63,10 +65,10 @@ cont_matrix <-
 fit2 <- contrasts.fit(fit, cont_matrix)
 fit3 <- eBayes(fit2)
 
-# get inferential summary for the six terms in the model
+#' get inferential summary for the six terms in the model
 
-# to get individual t statistics, etc., must use topTable() on each coef
-# separately
+#' to get individual t statistics, etc., must use topTable() on each coef
+#' separately
 model_terms <- colnames(modMat)
 names(model_terms) <- model_terms
 statInf_model_terms <-
@@ -76,11 +78,12 @@ statInf_model_terms <-
 statInf_model_terms <-
   rename(statInf_model_terms, c(X1 = "model_term", .rownames = "contig"))
 statInf_model_terms <-
-  statInf_model_terms[ ,c("contig", setdiff(names(statInf_model_terms),"contig"))]
+  statInf_model_terms[ ,c("contig",
+                          setdiff(names(statInf_model_terms),"contig"))]
 head(statInf_model_terms)
 str(statInf_model_terms)
 
-## informal tests so we know if things change, differ for Jenny vs Mack, etc.
+#' informal tests so we know if things change, differ for Jenny vs Mack, etc.
 test_that("stat inf on the model terms has 393654 rows",
           expect_equal(393654, nrow(statInf_model_terms)))
 (t_medians <- aggregate(t ~ model_term, statInf_model_terms, median))
@@ -91,7 +94,7 @@ write.table(statInf_model_terms,
             "../results/limma-results-model-terms.tsv",
             quote = FALSE, sep = "\t", row.names = FALSE)
 
-# get inferential summary for the effects we are most interested in
+#' get inferential summary for the effects we are most interested in
 focus_patterns <-
   c("weevil", "gTypeH898res", "^gTypeH898res$", "wound", "gallery")
 focus_terms <-
@@ -133,7 +136,7 @@ statInf_focus_terms <- statInf_focus_terms[vars_in_order]
 head(statInf_focus_terms)
 str(statInf_focus_terms)
 
-## informal tests so we know if things change, differ for Jenny vs Mack, etc.
+#' informal tests so we know if things change, differ for Jenny vs Mack, etc.
 test_that("stat inf on the focus terms has 328045 rows",
           expect_equal(328045, nrow(statInf_focus_terms)))
 (t_medians <- aggregate(t ~ focus_term, statInf_focus_terms, median))
@@ -143,4 +146,3 @@ all.equal(t_medians$t, c(0.04817940, 0.157361758, 0.01198738, 0.10723831))
 write.table(statInf_focus_terms,
             "../results/limma-results-focus-terms.tsv",
             quote = FALSE, sep = "\t", row.names = FALSE)
-
