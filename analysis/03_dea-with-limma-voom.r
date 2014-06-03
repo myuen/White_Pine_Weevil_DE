@@ -1,5 +1,3 @@
-#!/usr/bin/Rscript
-
 library(edgeR)
 library(plyr)
 library(testthat) # facilitate tests that will catch changes on re-analysis

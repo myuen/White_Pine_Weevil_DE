@@ -1,5 +1,3 @@
-#!/usr/bin/Rscript
-
 library(testthat) # facilitate tests that will catch changes on re-analysis
 library(plyr)     ## **ply() and revalue()
 
