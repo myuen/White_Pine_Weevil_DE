@@ -1,9 +1,7 @@
 #!/usr/bin/Rscript
 
 library(edgeR)
-library(ggplot2)
 library(plyr)
-library(reshape2)
 library(testthat) # facilitate tests that will catch changes on re-analysis
 
 ### Differential Expression Analysis on Sitka Spruce Weevil 
@@ -58,7 +56,9 @@ colnames(modMat) <- gsub("[()]", "", colnames(modMat))
 colnames(modMat)
 
 # voom transformation
+pdf("figure/03_dea-with-limma-voom_voom-plot.pdf")
 v <- voom(y, modMat, plot = TRUE) # take a couple moments
+dev.off()
 
 # Linear modelling
 fit <- lmFit(v, modMat)
