@@ -1,8 +1,10 @@
+#!/usr/bin/Rscript
+
 library(testthat) # facilitate tests that will catch changes on re-analysis
 library(plyr)     ## **ply() and revalue()
 
 # Marshal output files from Sailfish
-jFiles <- list.files("Sailfish-results/", full.names = TRUE)
+jFiles <- list.files("../data/Sailfish-results/", full.names = TRUE)
 test_that("Exactly 24 Sailfish output files are found",
           expect_equal(24, length(jFiles)))
 
@@ -13,7 +15,7 @@ tmp <- gsub("898", "H898", tmp)
 tmp <- gsub("903", "Q903", tmp)
 ## Use as names for good side effects later
 names(jFiles) <- tmp
-  
+
 ## Read one file to learn how many rows we expect and to grab rownames
 tmp <- read.table(jFiles[1], row.names = 1,
                   ## specifying colClasses speeds this up 2x
@@ -25,16 +27,16 @@ test_that("First Sailfish output file has 492317 rows",
 
 ## Read in all Sailfish data
 system.time(
-rawSailfishCounts <-
-  aaply(jFiles, 1, function(x) {
-    jDat <-
-      read.table(x, row.names = 1, nrows = n * 1.1,
-                 ## specifying colClasses speeds this up 2x
-                 colClasses = rep(c("character", "numeric"), c(1, 6)))
-    test_that("Sailfish output files have expected number of rows",
-              expect_equal(n, nrow(jDat)))
-    return(jDat$V7)
-  })
+  rawSailfishCounts <-
+    aaply(jFiles, 1, function(x) {
+      jDat <-
+        read.table(x, row.names = 1, nrows = n * 1.1,
+                   ## specifying colClasses speeds this up 2x
+                   colClasses = rep(c("character", "numeric"), c(1, 6)))
+      test_that("Sailfish output files have expected number of rows",
+                expect_equal(n, nrow(jDat)))
+      return(jDat$V7)
+    })
 ) ## ~90 seconds for JB
 
 ## NOTE: rawSailfishCounts is transposed relative to what we expect / want at
@@ -48,7 +50,7 @@ str(rawSailfishCounts)
 
 # We discovered more ribosomal RNA post-assembly using BLAST.  The following 
 # line removes putative ribosomal RNA from the table.
-rRNA <- scan("putativeRibosomalRNA.id", what = "")
+rRNA <- scan("../data/putativeRibosomalRNA.id", what = "")
 str(rRNA) # chr [1:389] "WPW_Inoculation_Trinity_C500_comp27782_c0_seq1" ...
 summary(colnames(rawSailfishCounts) %in% rRNA)
 #    Mode   FALSE    TRUE    NA's 
@@ -61,7 +63,7 @@ test_that("Sailfish output has 491928 rows after rRNA filtering",
           expect_equal(491928, n))
 
 ## enact the row / column transposition now
-write.table(t(rawSailfishCounts), "consolidated-Sailfish-results.txt",
+write.table(t(rawSailfishCounts), "../data/consolidated-Sailfish-results.txt",
             sep = "\t", quote = FALSE)
 
 ## from JB checking she got same data as original
@@ -90,5 +92,5 @@ expDes$grp <- with(expDes, interaction(gType, tx))
 expDes
 str(expDes)
 
-write.table(expDes, "White_Pine_Weevil_exp_design.tsv",
+write.table(expDes, "../data/White_Pine_Weevil_exp_design.tsv",
             sep = "\t", quote = FALSE, row.names = FALSE)

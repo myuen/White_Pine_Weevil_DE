@@ -25,7 +25,7 @@ Load counts from Sailfish. Each row represents a contig.
 
 ```r
 filteredSailfishCounts <- # take a few moments
-  read.delim("consolidated-filtered-Sailfish-results.txt")
+  read.delim("../data/consolidated-filtered-Sailfish-results.txt")
 str(filteredSailfishCounts) # 'data.frame':  65609 obs. of  24 variables:
 ```
 
@@ -68,7 +68,7 @@ Load experimental design
 
 
 ```r
-expDes <- read.delim("White_Pine_Weevil_exp_design.tsv",
+expDes <- read.delim("../data/White_Pine_Weevil_exp_design.tsv",
                      stringsAsFactors = FALSE)
 expDes <-
   transform(expDes,

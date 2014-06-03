@@ -20,7 +20,7 @@ library(testthat) # facilitate tests that will catch changes on re-analysis
 
 #' Load counts from Sailfish. Each row represents a contig.
 filteredSailfishCounts <- # take a few moments
-  read.delim("consolidated-filtered-Sailfish-results.txt")
+  read.delim("../data/consolidated-filtered-Sailfish-results.txt")
 str(filteredSailfishCounts) # 'data.frame':  65609 obs. of  24 variables:
 test_that("filtered Sailfish data (still) has 65609 rows upon import",
           expect_equal(65609, nrow(filteredSailfishCounts)))
@@ -28,7 +28,7 @@ test_that("Sailfish data (still) has data for exactly 24 samples",
           expect_equal(24, ncol(filteredSailfishCounts)))
 
 #' Load experimental design
-expDes <- read.delim("White_Pine_Weevil_exp_design.tsv",
+expDes <- read.delim("../data/White_Pine_Weevil_exp_design.tsv",
                      stringsAsFactors = FALSE)
 expDes <-
   transform(expDes,

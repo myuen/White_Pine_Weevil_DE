@@ -3,7 +3,7 @@
 
 load_focus_statInf <- function() {
   require(testthat)
-  sidf <- read.delim("limma-results-focus-terms.tsv")
+  sidf <- read.delim("../results/limma-results-focus-terms.tsv")
   test_that("inference results for our focus terms (still) have 328045 rows",
             expect_equal(328045, nrow(sidf)))
   sidf$focus_term <-

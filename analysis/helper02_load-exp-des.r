@@ -2,7 +2,7 @@
 
 load_expDes <- function() {
   require(testthat)  
-  expDes <- read.delim("White_Pine_Weevil_exp_design.tsv",
+  expDes <- read.delim("../data/White_Pine_Weevil_exp_design.tsv",
                        stringsAsFactors = FALSE)
   expDes <-
     mutate(expDes,

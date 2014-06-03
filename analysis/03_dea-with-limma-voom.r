@@ -1,3 +1,5 @@
+#!/usr/bin/Rscript
+
 library(edgeR)
 library(ggplot2)
 library(plyr)
@@ -9,7 +11,7 @@ library(testthat) # facilitate tests that will catch changes on re-analysis
 
 # Load counts from Sailfish
 filteredSailfishCounts <- # take a few moments
-  read.delim("consolidated-filtered-Sailfish-results.txt")
+  read.delim("../data/consolidated-filtered-Sailfish-results.txt")
 str(filteredSailfishCounts, list.len = 8)
 test_that("filtered Sailfish data has 65609 rows upon import",
           expect_equal(65609, nrow(filteredSailfishCounts)))
@@ -17,7 +19,7 @@ test_that("Sailfish data has data for exactly 24 samples",
           expect_equal(24, ncol(filteredSailfishCounts)))
 
 # Load experimental design
-expDes <- read.delim("White_Pine_Weevil_exp_design.tsv",
+expDes <- read.delim("../data/White_Pine_Weevil_exp_design.tsv",
                      stringsAsFactors = FALSE)
 expDes <-
   mutate(expDes,
@@ -95,7 +97,7 @@ all.equal(t_medians$t, c(1.118479141, 0.157361758, 0.092882336,
                          0.026698663, -0.067348886, 0.005007678))
 
 write.table(statInf_model_terms,
-            "limma-results-model-terms.tsv",
+            "../results/limma-results-model-terms.tsv",
             quote = FALSE, sep = "\t", row.names = FALSE)
 
 # get inferential summary for the effects we are most interested in
@@ -148,6 +150,6 @@ all.equal(t_medians$t, c(0.04817940, 0.157361758, 0.01198738, 0.10723831))
 # "Mean relative difference: 2.508257e-08" <-- that's OK!
 
 write.table(statInf_focus_terms,
-            "limma-results-focus-terms.tsv",
+            "../results/limma-results-focus-terms.tsv",
             quote = FALSE, sep = "\t", row.names = FALSE)
 

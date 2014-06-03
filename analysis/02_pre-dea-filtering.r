@@ -1,14 +1,13 @@
 library(edgeR)
 library(ggplot2)
 library(plyr)
-library(reshape2)
 library(testthat) # facilitate tests that will catch changes on re-analysis
 
 ### Differential Expression Analysis on Sitka Spruce Weevil 
 ### Experiment with limma + voom
 
 # Load counts from Sailfish
-rawSailfishCounts <- read.delim("consolidated-Sailfish-results.txt")
+rawSailfishCounts <- read.delim("../data/consolidated-Sailfish-results.txt")
 str(rawSailfishCounts) # 'data.frame':  491928 obs. of  24 variables:
 test_that("Sailfish data has 491928 rows upon import",
           expect_equal(491928, nrow(rawSailfishCounts)))
@@ -33,15 +32,19 @@ p <- ggplot(subset(present_sample_count, num.present > 0),
             aes(x = as.factor(num.present), y = freq)) +
   geom_bar(stat = "identity") + coord_flip() +
   xlab("frequency of: number of samples contig is present in")
-p + annotate("text", y = Inf, x = 12, hjust = 1.1,
-             label = 'contig called "present" in a sample if cpm > 1') +
+p <- p + annotate("text", y = Inf, x = 12, hjust = 1.1,
+                  label = 'contig called "present" in a sample if cpm > 1') +
   annotate("text", y = Inf, x = 3, hjust = 1.1,
            label = paste(with(present_sample_count, freq[num.present == 0]),
                          'contigs called "present" in NO samples')) +
   annotate("text", y = Inf, x = 22.5, hjust = 1.1,
            label = paste(with(present_sample_count, freq[num.present == 24]),
                          'contigs called "present" in all samples'))
-ggsave("White_Pine_Weevil_preDE_filtering.png")  
+ggsave("figure/White_Pine_Weevil_preDE_filtering.png", plot = p,
+       height = 7, width = 7)
+## specifying height and width prevents an empty Rplots.pdf file from being left
+## behind; see
+## http://stackoverflow.com/questions/17348359/how-to-stop-r-from-creating-empty-rplots-pdf-file-when-using-ggsave-and-rscript
 
 # Filtering low expression genes
 # We are setting an arbitary threshold and only keeping contigs with more than
@@ -52,5 +55,5 @@ test_that("After low expression filter, we have 65609 rows",
 # 65609 (down from 491928) ~= we have about 13% of original rows
 
 ## write to file
-write.table(y$counts, "consolidated-filtered-Sailfish-results.txt",
+write.table(y$counts, "../data/consolidated-filtered-Sailfish-results.txt",
             sep = "\t", quote = FALSE)
