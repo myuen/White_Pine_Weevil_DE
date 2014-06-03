@@ -40,8 +40,9 @@ p <- p + annotate("text", y = Inf, x = 12, hjust = 1.1,
   annotate("text", y = Inf, x = 22.5, hjust = 1.1,
            label = paste(with(present_sample_count, freq[num.present == 24]),
                          'contigs called "present" in all samples'))
-ggsave("figure/White_Pine_Weevil_preDE_filtering.png", plot = p,
+ggsave("figure/02_pre-dea-filtering-preDE-filtering.png", plot = p,
        height = 7, width = 7)
+
 ## specifying height and width prevents an empty Rplots.pdf file from being left
 ## behind; see
 ## http://stackoverflow.com/questions/17348359/how-to-stop-r-from-creating-empty-rplots-pdf-file-when-using-ggsave-and-rscript

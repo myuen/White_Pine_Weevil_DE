@@ -22,7 +22,7 @@
 	rm 02_pre-dea-filtering.html
 
 # figure documenting the filtering (same rule as above)
-figure/White_Pine_Weevil_preDE_filtering.png: ../data/consolidated-Sailfish-results.txt 02_pre-dea-filtering.r
+figure/02_pre-dea-filtering-preDE-filtering.png: ../data/consolidated-Sailfish-results.txt 02_pre-dea-filtering.r
 	Rscript -e 'library(methods); knitr::stitch_rmd("02_pre-dea-filtering.r")'
 	rm 02_pre-dea-filtering.html
 
