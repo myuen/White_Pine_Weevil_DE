@@ -8,15 +8,7 @@ getting what I wanted from `topTable()`. Specifically, I had trouble
 specifying the `coef` or term I wanted to see inference for. Here is where I 
 document the initial problem and the solution I've settled on.
 
-`spin()` this "by hand" with `precious = TRUE` to ensure markdown is
-preserved.
 
-
-```r
-library(limma)
-library(edgeR)
-library(testthat) # facilitate tests that will catch changes on re-analysis
-```
 
 ## Differential Expression Analysis on Sitka Spruce Weevil 
 ## Experiment with limma + voom
@@ -134,7 +126,7 @@ voom transformation
 v <- voom(y, modMat, plot = TRUE) # take a couple moments
 ```
 
-![plot of chunk first-voom](figure/first-voom.png) 
+![plot of chunk first-voom](figure/90_limma-model-term-name-fiasco-first-voom.png) 
 
 Linear modelling
 
@@ -201,7 +193,7 @@ voom transformation
 v <- voom(y, modMat, plot = TRUE) # take a couple moments
 ```
 
-![plot of chunk second-voom](figure/second-voom.png) 
+![plot of chunk second-voom](figure/90_limma-model-term-name-fiasco-second-voom.png) 
 
 Linear modelling
 
@@ -267,10 +259,10 @@ sessionInfo()
 ## [1] methods   stats     graphics  grDevices utils     datasets  base     
 ## 
 ## other attached packages:
-## [1] testthat_0.8.1 edgeR_3.4.2    limma_3.18.13 
+## [1] testthat_0.8.1 edgeR_3.4.2    limma_3.18.13  knitr_1.5.33  
 ## 
 ## loaded via a namespace (and not attached):
-## [1] digest_0.6.4   evaluate_0.5.5 formatR_0.10   knitr_1.5.33  
-## [5] stringr_0.6.2  tools_3.1.0
+## [1] digest_0.6.4   evaluate_0.5.5 formatR_0.10   stringr_0.6.2 
+## [5] tools_3.1.0
 ```
 

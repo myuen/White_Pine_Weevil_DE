@@ -7,9 +7,10 @@
 #' getting what I wanted from `topTable()`. Specifically, I had trouble 
 #' specifying the `coef` or term I wanted to see inference for. Here is where I 
 #' document the initial problem and the solution I've settled on.
-#' 
-#' `spin()` this "by hand" with `precious = TRUE` to ensure markdown is
-#' preserved.
+
+#+ setup, include = FALSE
+library(knitr)
+opts_chunk$set(fig.path = 'figure/90_limma-model-term-name-fiasco-')
 
 library(limma)
 library(edgeR)
