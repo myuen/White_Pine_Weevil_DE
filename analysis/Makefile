@@ -37,6 +37,11 @@ figure/White_Pine_Weevil_preDE_filtering.png: ../data/consolidated-Sailfish-resu
 	Rscript -e 'library(methods); knitr::spin("03_dea-with-limma-voom.r")'
 	rm 03_dea-with-limma-voom.html
 
+# explore the statistical inference results from the dea
+04_explore-dea-results.md: ../data/consolidated-filtered-Sailfish-results.txt ../data/White_Pine_Weevil_exp_design.tsv helper01_load-counts.r helper02_load-exp-des.r helper03_load-focus-statinf.r helper04_extract-and-tidy.r 04_explore-dea-results.r
+	Rscript -e 'library(methods); knitr::spin("04_explore-dea-results.r")'
+	rm 04_explore-dea-results.html
+
 # documenting my work as I sorted out puzzling behavior re: column names of the
 # model matrix and making contrasts
 90_limma-model-term-name-fiasco.md: 90_limma-model-term-name-fiasco.r

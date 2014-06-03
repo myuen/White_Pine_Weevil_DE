@@ -5,7 +5,7 @@ library(testthat)
 library(ggplot2)
 library(reshape2)
 library(fdrtool) # fdrtool() to compute pi0 (or eta0, as they say)
-##opts_chunk$set(fig.path = 'figure/stripplot-')
+opts_chunk$set(fig.path = 'figure/04_explore-dea-results-')
 
 #' Source purpose-built functions to load and validate the data, the
 #' experimental design, and the statistical inference results for our focus

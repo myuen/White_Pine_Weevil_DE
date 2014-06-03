@@ -71,7 +71,7 @@ p + geom_histogram()
 p + geom_density()
 ```
 
-<img src="figure/weevil-estimates1.png" title="plot of chunk weevil-estimates" alt="plot of chunk weevil-estimates" width="50%" /><img src="figure/weevil-estimates2.png" title="plot of chunk weevil-estimates" alt="plot of chunk weevil-estimates" width="50%" />
+<img src="figure/04_explore-dea-results-weevil-estimates1.png" title="plot of chunk weevil-estimates" alt="plot of chunk weevil-estimates" width="50%" /><img src="figure/04_explore-dea-results-weevil-estimates2.png" title="plot of chunk weevil-estimates" alt="plot of chunk weevil-estimates" width="50%" />
 
 Explore the distribution of estimates for the various effects of interest.
 Note: one facet will be blank, corresponding to the test whether all terms
@@ -89,7 +89,7 @@ p + geom_density(aes(colour = focus_term))
 ## Warning: Removed 65609 rows containing non-finite values (stat_density).
 ```
 
-<img src="figure/focus-term-estimates1.png" title="plot of chunk focus-term-estimates" alt="plot of chunk focus-term-estimates" width="50%" /><img src="figure/focus-term-estimates2.png" title="plot of chunk focus-term-estimates" alt="plot of chunk focus-term-estimates" width="50%" />
+<img src="figure/04_explore-dea-results-focus-term-estimates1.png" title="plot of chunk focus-term-estimates" alt="plot of chunk focus-term-estimates" width="50%" /><img src="figure/04_explore-dea-results-focus-term-estimates2.png" title="plot of chunk focus-term-estimates" alt="plot of chunk focus-term-estimates" width="50%" />
 
 Explore the distribution of t statistics for the various effects of interest.
 Note: one facet will be blank, corresponding to the test whether all terms 
@@ -107,7 +107,7 @@ p + geom_density(aes(colour = focus_term))
 ## Warning: Removed 65609 rows containing non-finite values (stat_density).
 ```
 
-<img src="figure/focus-term-t-statistics1.png" title="plot of chunk focus-term-t-statistics" alt="plot of chunk focus-term-t-statistics" width="50%" /><img src="figure/focus-term-t-statistics2.png" title="plot of chunk focus-term-t-statistics" alt="plot of chunk focus-term-t-statistics" width="50%" />
+<img src="figure/04_explore-dea-results-focus-term-t-statistics1.png" title="plot of chunk focus-term-t-statistics" alt="plot of chunk focus-term-t-statistics" width="50%" /><img src="figure/04_explore-dea-results-focus-term-t-statistics2.png" title="plot of chunk focus-term-t-statistics" alt="plot of chunk focus-term-t-statistics" width="50%" />
 
 Explore the distribution of p-values for the various effects of interest. 
 Note: this works same for all effects of interest.
@@ -138,7 +138,7 @@ p + geom_histogram() + facet_wrap( ~ focus_term)
 p + geom_density(aes(colour = focus_term))
 ```
 
-<img src="figure/focus-term-p-values1.png" title="plot of chunk focus-term-p-values" alt="plot of chunk focus-term-p-values" width="50%" /><img src="figure/focus-term-p-values2.png" title="plot of chunk focus-term-p-values" alt="plot of chunk focus-term-p-values" width="50%" />
+<img src="figure/04_explore-dea-results-focus-term-p-values1.png" title="plot of chunk focus-term-p-values" alt="plot of chunk focus-term-p-values" width="50%" /><img src="figure/04_explore-dea-results-focus-term-p-values2.png" title="plot of chunk focus-term-p-values" alt="plot of chunk focus-term-p-values" width="50%" />
 
 Explore the distribution of Benjamini-Hockberg adjusted p-values for the
 various effects of interest. Note: this works same for all effects of
@@ -151,7 +151,7 @@ p + geom_histogram() + facet_wrap( ~ focus_term)
 p + geom_density(aes(colour = focus_term))
 ```
 
-<img src="figure/focus-term-adjusted-p-values1.png" title="plot of chunk focus-term-adjusted-p-values" alt="plot of chunk focus-term-adjusted-p-values" width="50%" /><img src="figure/focus-term-adjusted-p-values2.png" title="plot of chunk focus-term-adjusted-p-values" alt="plot of chunk focus-term-adjusted-p-values" width="50%" />
+<img src="figure/04_explore-dea-results-focus-term-adjusted-p-values1.png" title="plot of chunk focus-term-adjusted-p-values" alt="plot of chunk focus-term-adjusted-p-values" width="50%" /><img src="figure/04_explore-dea-results-focus-term-adjusted-p-values2.png" title="plot of chunk focus-term-adjusted-p-values" alt="plot of chunk focus-term-adjusted-p-values" width="50%" />
 
 Source function to extract and tidy count data
 
@@ -207,7 +207,7 @@ p + geom_jitter(position = position_jitter(height = .15)) +
   facet_wrap(~ contig, scales="free_x")
 ```
 
-![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4.png) 
+![plot of chunk unnamed-chunk-4](figure/04_explore-dea-results-unnamed-chunk-4.png) 
 
 Find the top hits w/r/t the weevil effect
 
@@ -260,7 +260,7 @@ p + geom_jitter(position = position_jitter(height = .15)) +
   facet_wrap(~ contig, scales="free_x")
 ```
 
-![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5.png) 
+![plot of chunk unnamed-chunk-5](figure/04_explore-dea-results-unnamed-chunk-5.png) 
 
 Find the top hits w/r/t genotype in the control condition specifically
 
@@ -330,5 +330,5 @@ p + geom_jitter(position = position_jitter(height = .15)) +
   facet_wrap(~ contig, scales="free_x")
 ```
 
-![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6.png) 
+![plot of chunk unnamed-chunk-6](figure/04_explore-dea-results-unnamed-chunk-6.png) 
 
