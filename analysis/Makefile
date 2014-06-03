@@ -29,4 +29,5 @@ figure/White_Pine_Weevil_preDE_filtering.png: ../data/consolidated-Sailfish-resu
 # conduct differential expression analysis and output statistical inference for
 # the model parameters
 ../results/limma-results-model-terms.tsv: ../data/consolidated-filtered-Sailfish-results.txt ../data/White_Pine_Weevil_exp_design.tsv helper01_load-counts.r helper02_load-exp-des.r 03_dea-with-limma-voom.r
-	Rscript -e 'library(methods); source("03_dea-with-limma-voom.r")'
+	Rscript -e 'library(methods); knitr::stitch_rmd("03_dea-with-limma-voom.r")'
+	rm 03_dea-with-limma-voom.html
