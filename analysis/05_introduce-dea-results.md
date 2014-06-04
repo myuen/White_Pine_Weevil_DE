@@ -22,6 +22,7 @@ From this, we can extract parameter estimates for the various parameters of inte
 
 The inferential results for the six parameters of our model are given in [results/limma-results-model-terms.tsv](../results/limma-results-model-terms.tsv), which is quite large. There is one row for every contig * parameter combination. Here are the variables or columns:
 
+  * contig
   * logFC = parameter estimate
   * AveExpr *(ignoring)*
   * t = t statistic for H0: this parameter = 0
