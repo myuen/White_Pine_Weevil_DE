@@ -1,28 +1,39 @@
 ---
 title: "Introducing the differential expression analysis results"
 author: "Jenny Bryan"
-date: "3 June, 2014"
-output: html_document
+date: "23 June, 2014"
+output:
+  html_document:
+    toc: true
 ---
 
-We discussed and chose a model in this document: [model-exposition.md](../model-exposition/model-exposition.md). Recall the fictional example we used for illustration:
+Here is a useful fictional example. Note the two views of the same set of 6 conditions: split out primarily based on genotype (top) or based on treatment (bottom). For different comparisons, different viewpoints are more advantageous.
 
-![](../model-exposition/model-exposition.001.png)
+![](model-exposition.001.png)
 
-We concluded there were two main interests:
+We have concluded there are three main interests:
 
-  * The differences between the resistant H898 genotype and the susceptible Q903 genotype in each of the 3 conditions -- but, especially in the control condition
-  * The differences in the expression change associated with gallery vs wounding between the resistant H898 genotype and the susceptible Q903 genotype
+  * The differences between the resistant H898 genotype and the susceptible Q903 genotype in each of the 3 conditions (with special interest in the control condition).
+    - This leads to estimation and inference related to each individual condition (3 terms) + inference related to all 3 at once (1 overall F test).
+  * The differences in the expression change associated with gallery vs wounding in the resistant H898 genotype and in and the susceptible Q903 genotype
+    - This leads to estimation and inference for each genotype (2 terms).
+  * The difference between the "gallery vs. wounding" effects between the two genotypes.
+    - This leads to estimation and inference for a single term.
+    
+Next I show the model I fit and then, further below, connect it to all the things we care about.
+    
+## The fitted model
+
+The path of least resistance is to fit the linear model using a standard parametrization.
   
-For reference, here is the model and parametrization we actually used:
+![](model-exposition.005.png)
 
-![](../model-exposition/model-exposition.005.png)
+From this, we can extract parameter estimates for the various terms of interest. We can test whether they are equal to zero, individually, and as a group, which gives rise to test statistics and then p-values.
 
-From this, we can extract parameter estimates for the various parameters of interest. We can test whether these parameters are equal to zero, individually, and as a group, which gives rise to test statistics and then p-values.
-
-The inferential results for the six parameters of our model are given in [results/limma-results-model-terms.tsv](../results/limma-results-model-terms.tsv), which is quite large. There is one row for every contig * parameter combination. Here are the variables or columns:
+However, for completeness, I have committed the inferential results for the six natural parameters of the model via [results/limma-results-model-terms.tsv](../results/limma-results-model-terms.tsv), which is quite large. There is one row for every contig * parameter combination. Here are the variables or columns:
 
   * contig
+  * model_term = identifies one of the six model parameters
   * logFC = parameter estimate
   * AveExpr *(ignoring)*
   * t = t statistic for H0: this parameter = 0
@@ -30,25 +41,48 @@ The inferential results for the six parameters of our model are given in [result
   * adj.P.Val = Benjamini-Hochberg adjusted p-value, a.k.a. q-value, which is aimed at controlling the false discovery rate (FDR)
   * B *(ignoring)*
 
-Now let's focus on the parameters, groups of parameters, and contrasts we care most about. First, recall the effect of genotype within each condition and globally:
+## Resistant H898 genotype vs. susceptible Q903 genotype
+
+Here are the 3 comparisons of interest: resistant H898 genotype vs. susceptible Q903 genotype in each individual condition:
 
 ![](../model-exposition/model-exposition.010.png)
 
-There are 3 individual parameters here, plus the set of all 3 together.
+The figure connects visual depictions of the comparisons to the name I have used when reporting results.
 
-Second, recall the differential effect of gallery vs wounding between the two genotypes -- the so-called *weevil* effect:
+__Statistical note:__ When testing if a single parameter (or term, more generally) is equal to zero, a *t*-test arises. We can also provide an estimate of that parameter. This applies to the 3 terms that contrast the two genotypes within a condition. However, when testing if 3 parameters are all equal to zero as a group, an *F* test arises and there's also no sensible estimate to report. So don't be surprised at the difference in how results get reported in those two scenarios.
 
-![](../model-exposition/model-exposition.011.png)
+## Gallery vs. wounding = weevil effects
+
+Here are the 2 comparisons of interest: Gallery vs. Wounding in each genotype. We will call this the weevil effect.
+
+![](model-exposition.014.png)
+
+## Difference of weevil effects
+
+Last we consider the difference of the weevil effects in the resistant H898 genotype vs. the susceptible Q903.
+
+![](../model-exposition/model-exposition.015.png)
 
 Though it may be hard to believe, that effect is easy to extract from our model but simply subtracting one interaction effect from the other:
 
-![](../model-exposition/model-exposition.012.png)
+![](../model-exposition/model-exposition.016.png)
 
-The estimates (where well-defined), test statistics, p-values, etc. for these parameters, groups of parameters, and contrast are given in [results/limma-results-focus-terms.tsv](../results/limma-results-focus-terms.tsv). The variables or columns are almost identical to those described above but with two wrinkles:
+## Where to find results
 
-  * Since one of the tests we conduct is whether __all__ the genotype terms are simulaneously equal to zero, the `logFC` field is NA in these rows, since there is no single, relevant estimate.
-  * For the same reason, the test in that case is an F test instead of a t test.
+As described above, straight-ahead inferential results for the six natural parameters of the fitted model are given in [results/limma-results-model-terms.tsv](../results/limma-results-model-terms.tsv).
 
-Hopefully these figures provide a decent explanation of the model and of the results that come out of it. The descriptions above should also explain the basic structure of the two main results files.
+__However__, I have also formed a specific file of results for the specific terms we are interested in. To review, here are the variables you will find:
 
-A very preliminary and rudimentary exploration of the results is carried out in `analysis/04_explore-dea-results.r`, which can be viewed in report form at [analysis/04_explore-dea-results.md](04_explore-dea-results.md).
+  * contig
+  * focus_term = identifies one of the terms of specific interest
+  * logFC = term estimate, which can be NA if no single estimate is relevant
+  * AveExpr *(ignoring)*
+  * t = t statistic for H0: this parameter = 0 (used for single terms)
+  * F = F statistic for H0: this parameter = 0 (used for groups of terms)
+  * P.Value = associated p-value
+  * adj.P.Val = Benjamini-Hochberg adjusted p-value, a.k.a. q-value, which is aimed at controlling the false discovery rate (FDR)
+  * B *(ignoring)*
+
+Here is that (extremely large!) file: [results/limma-results-focus-terms.tsv](../results/limma-results-focus-terms.tsv).
+
+A very preliminary and rudimentary exploration of the results is carried out in `analysis/04_explore-dea-results.r`, which can be viewed in report form at [analysis/04_explore-dea-results.md](../analysis/04_explore-dea-results.md).
