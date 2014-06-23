@@ -56,11 +56,16 @@ v <- voom(y, modMat, plot = TRUE) # take a couple moments
 #' Linear modelling and forming contrasts
 fit <- lmFit(v, modMat)
 cont_matrix <-
-  makeContrasts(Intercept, gTypeH898res, txWound, txGallery,
-                gTypeH898res_txWound, gTypeH898res_txGallery,
-                weevil = gTypeH898res_txGallery - gTypeH898res_txWound,
+  makeContrasts(Intercept, gTypeH898res, txWound, txGallery,  # 4 of natural 6
+                gTypeH898res_txWound, gTypeH898res_txGallery, # 2 of natural 6
+                # H898res effect (rel to Q903sus) in non-Control conditions 
                 wound = gTypeH898res + gTypeH898res_txWound,
                 gallery = gTypeH898res + gTypeH898res_txGallery,
+                # weevil effect = Gallery vs. Wound in each gType
+                weevil_in_gTypeQ903susc = txGallery - txWound,
+                weevil_in_gTypeH898res = txGallery - txWound +
+                  gTypeH898res_txGallery - gTypeH898res_txWound,
+                weevil_diff = gTypeH898res_txGallery - gTypeH898res_txWound,
                 levels = modMat)
 fit2 <- contrasts.fit(fit, cont_matrix)
 fit3 <- eBayes(fit2)
@@ -96,10 +101,12 @@ write.table(statInf_model_terms,
 
 #' get inferential summary for the effects we are most interested in
 focus_patterns <-
-  c("weevil", "gTypeH898res", "^gTypeH898res$", "wound", "gallery")
+  c("^gTypeH898res$", "wound", "gallery", "^gTypeH898res",
+    "weevil_in_gTypeQ903susc", "weevil_in_gTypeH898res", "weevil_diff")
 focus_terms <-
-  c("weevil", "gTypeH898res_all", "gTypeH898res_in_control",
-    "gTypeH898res_in_wound", "gTypeH898res_in_gallery")
+  c("gTypeH898res_in_control", "gTypeH898res_in_wound",
+    "gTypeH898res_in_gallery", "gTypeH898res_all",
+    "weevil_in_gTypeQ903susc", "weevil_in_gTypeH898res", "weevil_diff")
 names(focus_patterns) <- focus_terms
 statInf_focus_terms <-
   alply(focus_patterns, 1,
@@ -130,18 +137,19 @@ statInf_focus_terms <-
 summary(statInf_focus_terms)
 
 #' rearrange the variables
-vars_in_order <- c("contig", "focus_term", "logFC", "AveExpr",
+vars_in_order <- c("focus_term", "contig", "logFC", "AveExpr",
                    "t", "F", "P.Value", "adj.P.Val", "B")
 statInf_focus_terms <- statInf_focus_terms[vars_in_order]
 head(statInf_focus_terms)
 str(statInf_focus_terms)
 
 #' informal tests so we know if things change, differ for Jenny vs Mack, etc.
-test_that("stat inf on the focus terms has 328045 rows",
-          expect_equal(328045, nrow(statInf_focus_terms)))
+test_that("stat inf on the focus terms has 459263 rows",
+          expect_equal(459263, nrow(statInf_focus_terms)))
 (t_medians <- aggregate(t ~ focus_term, statInf_focus_terms, median))
-all.equal(t_medians$t, c(0.04817940, 0.157361758, 0.01198738, 0.10723831))
-# "Mean relative difference: 2.508257e-08" <-- that's OK!
+all.equal(t_medians$t, c( 0.157361758, 0.01198738, 0.10723831,
+                         -0.15538291, -0.09072355, 0.04817940))
+# "Mean relative difference: 2.701645e-08" <-- that's OK!
 
 write.table(statInf_focus_terms,
             "../results/limma-results-focus-terms.tsv",
