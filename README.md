@@ -3,6 +3,8 @@ White_Pine_Weevil_DE
 
 White Pine Weevil Differential Expression Analysis Experiment
 
+For the current best model exposition, go here: [model-exposition/03_model-exposition.md](model-exposition/03_model-exposition.md)
+
 People involved in this particular analysis:
 
   * Mack Yuen <myuen@mail.ubc.ca>
