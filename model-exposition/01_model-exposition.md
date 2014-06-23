@@ -5,6 +5,8 @@ date: "23 May, 2014"
 output: html_document
 ---
 
+*NOTE: This was my first attempt to explain the model to myself, Mack, and Justin. We've made progress since then, so see similarly named files with higher number!*
+
 We need to decide how to parametrize our model and, within that, to specify which effects we are interested in, i.e. which effects do we want to test for equality with zero? Here JB is using written and verbal material to work out how to translate the biological question(s) into statistical ones.
 
 From Mack's original email:
