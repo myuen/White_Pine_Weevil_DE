@@ -8,9 +8,9 @@ library(testthat) # facilitate tests that will catch changes on re-analysis
 
 # Load counts from Sailfish
 rawSailfishCounts <- read.delim("../data/consolidated-Sailfish-results.txt")
-str(rawSailfishCounts) # 'data.frame':  491928 obs. of  24 variables:
-test_that("Sailfish data has 491928 rows upon import",
-          expect_equal(491928, nrow(rawSailfishCounts)))
+str(rawSailfishCounts) # 'data.frame':  483047 obs. of  24 variables:
+test_that("Sailfish data has 483047 rows upon import",
+          expect_equal(483047, nrow(rawSailfishCounts)))
 test_that("Sailfish data has data for exactly 24 samples",
           expect_equal(24, ncol(rawSailfishCounts)))
 
@@ -51,9 +51,9 @@ ggsave("figure/02_pre-dea-filtering-preDE-filtering.png", plot = p,
 # We are setting an arbitary threshold and only keeping contigs with more than
 # 1 count-per-million (cpm) in at least 2 samples
 y <- y[(rowSums(cpm(y) > 1) > 1), ]
-test_that("After low expression filter, we have 65609 rows",
-          expect_equal(65609, nrow(y)))
-# 65609 (down from 491928) ~= we have about 13% of original rows
+test_that("After low expression filter, we have 65600 rows",
+          expect_equal(65600, nrow(y)))
+# 65600 (down from 483047) ~= we have about 13% of original rows
 
 ## write to file
 write.table(y$counts, "../data/consolidated-filtered-Sailfish-results.txt",
