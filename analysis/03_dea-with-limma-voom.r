@@ -16,7 +16,7 @@ source("helper02_load-exp-des.r")
 
 #' Load counts from Sailfish
 x <- load_counts() # takes a few moments
-str(x, list.len = 8) # 'data.frame':  65609 obs. of  24 variables:
+str(x, list.len = 8) # 'data.frame':  65600 obs. of  24 variables:
 
 #' Load experimental design
 expDes <- load_expDes()
@@ -25,6 +25,7 @@ expDes$grp <- # not really sure that we need this?
                       levels = paste(levels(gType),
                                      rep(levels(tx), each = 2), sep = ".")))
 str(expDes) # 'data.frame':  24 obs. of  6 variables:
+
 
 #' Load counts into DGEList object from edgeR package.
 y <- DGEList(counts = x, group = expDes$grp)
@@ -55,101 +56,85 @@ v <- voom(y, modMat, plot = TRUE) # take a couple moments
 
 #' Linear modelling and forming contrasts
 fit <- lmFit(v, modMat)
+
 cont_matrix <-
-  makeContrasts(Intercept, gTypeH898res, txWound, txGallery,  # 4 of natural 6
-                gTypeH898res_txWound, gTypeH898res_txGallery, # 2 of natural 6
-                # H898res effect (rel to Q903sus) in non-Control conditions 
-                wound = gTypeH898res + gTypeH898res_txWound,
-                gallery = gTypeH898res + gTypeH898res_txGallery,
-                # weevil effect = Gallery vs. Wound in each gType
-                weevil_in_gTypeQ903susc = txGallery - txWound,
-                weevil_in_gTypeH898res = txGallery - txWound +
-                  gTypeH898res_txGallery - gTypeH898res_txWound,
-                weevil_diff = gTypeH898res_txGallery - gTypeH898res_txWound,
-                levels = modMat)
+  makeContrasts(
+    # A - Within genotype comparisons
+    # A1 - Wound vs. Control
+    wound_Q903 = txWound,
+    wound_H898 = txWound + gTypeH898res_txWound,
+    # A2 - Gallery vs. Wound
+    feed_Q903 = txGallery - txWound,
+    feed_H898 = txGallery - txWound +
+      gTypeH898res_txGallery - gTypeH898res_txWound,
+    # A3 - Gallery vs. Control (combined effect of wounding and feeding)
+    combined_effect_Q903 = txGallery,
+    combined_effect_H898 = txGallery + gTypeH898res_txGallery,
+    # B - Between genotype comparisons
+    # B1 - control vs control
+    ctrl_vs_ctrl = gTypeH898res,
+    # B2 - wound vs wound
+    wound_vs_wound = gTypeH898res + gTypeH898res_txWound,
+    # B3 - gallery vs gallery
+    gallery_vs_gallery = gTypeH898res + gTypeH898res_txGallery,
+    # C - Comparison of comparison
+    # C1 -  Mwounding vs. wounding
+    wounding_diff = gTypeH898res_txWound,
+    # C2 - feeding vs. feeding i.e. (H898G - H898W) - (Q903G - Q903W)
+    feeding_diff = gTypeH898res_txGallery - gTypeH898res_txWound,
+    # C3 - combined effect vs. combined effect i.e. (H898G - H898C) - (Q903G - Q903C)
+    combined_diff = gTypeH898res_txGallery,
+    # D - Special case 
+    # D1 - Induced vs Constitutive (Q903G - Q903W) - (H898C - Q903C)
+    induced_vs_const = txGallery - txWound - gTypeH898res,
+    levels = modMat)
+
 fit2 <- contrasts.fit(fit, cont_matrix)
+
 fit3 <- eBayes(fit2)
 
-#' get inferential summary for the six terms in the model
+summary(decideTests(fit3, p.value = 0.01, lfc = 2))
+#    wound_Q903 wound_H898 feed_Q903 feed_H898 combined_effect_Q903
+# -1          1          0      4632         4                 3896
+# 0       65599      65600     59054     65596                58117
+# 1           0          0      1914         0                 3587
+#    combined_effect_H898 ctrl_vs_ctrl wound_vs_wound gallery_vs_gallery
+# -1                    2         3679           3769               4390
+# 0                 65597        57989          57971              55130
+# 1                     1         3932           3860               6080
+#    wounding_diff feeding_diff combined_diff induced_vs_const
+# -1             0           99           175             5804
+# 0          65600        64872         65151            56611
+# 1              0          629           274             3185
+
+focus_terms <- colnames(cont_matrix)
+
+names(focus_terms) <- focus_terms
 
 #' to get individual t statistics, etc., must use topTable() on each coef
 #' separately
-model_terms <- colnames(modMat)
-names(model_terms) <- model_terms
-statInf_model_terms <-
-  adply(model_terms, 1,
-        function(x) name_rows(topTable(fit3, coef = x,
-                                       number = Inf,sort.by = "none")))
-statInf_model_terms <-
-  rename(statInf_model_terms, c(X1 = "model_term", .rownames = "contig"))
-statInf_model_terms <-
-  statInf_model_terms[ ,c("contig",
-                          setdiff(names(statInf_model_terms),"contig"))]
-head(statInf_model_terms)
-str(statInf_model_terms)
-
-#' informal tests so we know if things change, differ for Jenny vs Mack, etc.
-test_that("stat inf on the model terms has 393654 rows",
-          expect_equal(393654, nrow(statInf_model_terms)))
-(t_medians <- aggregate(t ~ model_term, statInf_model_terms, median))
-all.equal(t_medians$t, c(1.118479141, 0.157361758, 0.092882336,
-                         0.026698663, -0.067348886, 0.005007678))
-
-write.table(statInf_model_terms,
-            "../results/limma-results-model-terms.tsv",
-            quote = FALSE, sep = "\t", row.names = FALSE)
-
-#' get inferential summary for the effects we are most interested in
-focus_patterns <-
-  c("^gTypeH898res$", "wound", "gallery", "^gTypeH898res",
-    "weevil_in_gTypeQ903susc", "weevil_in_gTypeH898res", "weevil_diff")
-focus_terms <-
-  c("gTypeH898res_in_control", "gTypeH898res_in_wound",
-    "gTypeH898res_in_gallery", "gTypeH898res_all",
-    "weevil_in_gTypeQ903susc", "weevil_in_gTypeH898res", "weevil_diff")
-names(focus_patterns) <- focus_terms
 statInf_focus_terms <-
-  alply(focus_patterns, 1,
-        function(x) name_rows(topTable(fit3,
-                                       coef = grep(x, colnames(coef(fit3))),
+  adply(focus_terms, 1,
+        function(x) name_rows(topTable(fit3, coef = x,
                                        number = Inf, sort.by = "none")))
-names(statInf_focus_terms) <- focus_terms
 
-#' I must massage these results before I can rbind them
-#' Must address fact that they don't have exactly the same variables
-var_names <- unique(unlist(llply(statInf_focus_terms, names)))
-ldply(statInf_focus_terms, function(x) {
-  y <- var_names %in% names(x)
-  names(y) <- var_names
-  y
-})
-
-#' get rid of the three separate estimates in the case where we are testing for
-#' equality with zero for three terms at once
-statInf_focus_terms$gTypeH898res_all <-
-  subset(statInf_focus_terms$gTypeH898res_all,
-         select = -c(gTypeH898res, gTypeH898res_txWound, gTypeH898res_txGallery))
-
-#' rbind them
-statInf_focus_terms <- ldply(statInf_focus_terms, function(x) x)
 statInf_focus_terms <-
   rename(statInf_focus_terms, c(X1 = "focus_term", .rownames = "contig"))
-summary(statInf_focus_terms)
 
-#' rearrange the variables
-vars_in_order <- c("focus_term", "contig", "logFC", "AveExpr",
-                   "t", "F", "P.Value", "adj.P.Val", "B")
-statInf_focus_terms <- statInf_focus_terms[vars_in_order]
-head(statInf_focus_terms)
+statInf_focus_terms <-
+  statInf_focus_terms[ ,c("contig",
+                          setdiff(names(statInf_focus_terms),"contig"))]
 str(statInf_focus_terms)
 
-#' informal tests so we know if things change, differ for Jenny vs Mack, etc.
-test_that("stat inf on the focus terms has 459263 rows",
-          expect_equal(459263, nrow(statInf_focus_terms)))
+
+test_that("stat inf on the focus terms has 852,800 rows",
+          expect_equal(65600 * 13, nrow(statInf_focus_terms)))
+
 (t_medians <- aggregate(t ~ focus_term, statInf_focus_terms, median))
-all.equal(t_medians$t, c( 0.157361758, 0.01198738, 0.10723831,
-                         -0.15538291, -0.09072355, 0.04817940))
-# "Mean relative difference: 2.701645e-08" <-- that's OK!
+
+all.equal(t_medians$t, c(0.093017448, 0.012387609, -0.164613806, -0.093503376, 
+            0.021539496, -0.089969465, 0.162680935, 0.011875199, 
+            0.118430987, -0.067642621, 0.052106222, 0.007929199, -0.321207705))
 
 write.table(statInf_focus_terms,
             "../results/limma-results-focus-terms.tsv",
