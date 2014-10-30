@@ -11,6 +11,7 @@ library(testthat) # facilitate tests that will catch changes on re-analysis
 
 #' Source purpose-built functions to load and validate the data and the 
 #' experimental design. Then call them.
+setwd("analysis/")
 source("helper01_load-counts.r")
 source("helper02_load-exp-des.r")
 
