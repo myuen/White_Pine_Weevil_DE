@@ -6,14 +6,15 @@ load_focus_statInf <- function() {
   
   sidf <- read.delim("../results/limma-results-focus-terms.tsv")
   
-  test_that("inference results for our focus terms (still) have 825,917 rows",
-            expect_equal(65609 * 13, nrow(sidf)))
+  test_that("inference results for our focus terms (still) have 852,800 rows",
+            expect_equal(65600 * 13, nrow(sidf)))
   
   sidf$focus_term <- 
     factor(sidf$focus_term, levels = 
-             c("wounding_in_Q903", "wounding_in_H898", "feeding_in_Q903", "feeding_in_H898",
-               "comb_effect_in_Q903", "comb_effect_in_H898", "ctrl_vs_ctrl", "wound_vs_wound",
-               "gallery_vs_gallery", "wounding_diff", "feeding_diff", "combined_diff",
+             c("wound_Q903", "wound_H898", "feed_Q903", "feed_H898",
+               "combined_effect_Q903", "combined_effect_H898", 
+               "ctrl_vs_ctrl", "wound_vs_wound","gallery_vs_gallery", 
+               "wounding_diff", "feeding_diff", "combined_diff",
                "induced_vs_const"))
 
   options(digits = 10)
@@ -21,11 +22,10 @@ load_focus_statInf <- function() {
   
   test_that("medians of the t statistics are what we expect",
             expect_equal(t_medians$t,
-                         c(0.092882336, 0.012555037, -0.155382913, -0.090723545,
-                           0.026698663, -0.086665900,  0.157361758, 0.011987382,
-                           0.107238311, -0.067348886,  0.048179395,  0.005007678,
-                           -0.312069443), tolerance = 1.00293e-07))
-#   ,tolerance = 2 * .Machine$double.eps ^ 0.5))
+                         c(0.093017448, 0.012387609, -0.164613806, -0.093503376, 
+                           0.021539496, -0.089969465, 0.162680935, 0.011875199, 
+                           0.118430987, -0.067642621, 0.052106222, 0.007929199, -0.321207705), 
+                         tolerance = 2 * .Machine$double.eps ^ 0.5))
   
   return(sidf)
 }
