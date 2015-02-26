@@ -2,7 +2,7 @@ library(testthat) # facilitate tests that will catch changes on re-analysis
 library(plyr)     ## **ply() and revalue()
 
 # Marshal output files from Sailfish
-jFiles <- list.files("../data/Sailfish-results/", full.names = TRUE)
+jFiles <- list.files("data/Sailfish-results/", full.names = TRUE)
 test_that("Exactly 24 Sailfish output files are found",
           expect_equal(24, length(jFiles)))
 
@@ -45,36 +45,36 @@ str(rawSailfishCounts)
 # num [1:24, 1:492317] 0 0 1.87 0 0 ...
 # - attr(*, "dimnames")=List of 2
 # ..$ X1: chr [1:24] "H898C1" "H898C2" "H898C3" "H898C4" ...
-# ..$   : chr [1:492317] "WPW_Inoculation_Trinity_C500_comp100002_c0_seq1" "WPW_Inoculation_Trinity_C500_comp100009_c0_seq1" "WPW_Inoculation_Trinity_C500_comp100009_c0_seq2" "WPW_Inoculation_Trinity_C500_comp100011_c0_seq1" ...
+# ..$   : chr [1:492317] "WPW_Inoculation_Trinity_C500_comp100002_c0_seq1" ...
 
 
 # We discovered more ribosomal RNA post-assembly using BLAST.  The following 
 # line removes putative ribosomal RNA from the table.
-rRNA <- scan("../data/putativeRibosomalRNA.id", what = "")
+rRNA <- scan("data/putativeRibosomalRNA.id", what = "")
 str(rRNA) # chr [1:389] "WPW_Inoculation_Trinity_C500_comp27782_c0_seq1" ...
 summary(colnames(rawSailfishCounts) %in% rRNA)
 #    Mode   FALSE    TRUE    NA's 
 # logical  491928     389       0 
 
-microbial <- scan("../data/microbialContamination.id", what = "")
+microbial <- scan("data/microbialContamination.id", what = "")
 str(microbial) #  chr [1:181] "WPW_Inoculation_Trinity_C500_comp150393_c0_seq1" ...
 summary(colnames(rawSailfishCounts) %in% microbial)
 # Mode   FALSE    TRUE    NA's 
 # logical  492136     181       0
 
-human <- scan("../data/humanContamination.id", what = "")
+human <- scan("data/humanContamination.id", what = "")
 str(human) # chr [1:224] "WPW_Inoculation_Trinity_C500_comp107462_c0_seq1" ...
 summary(colnames(rawSailfishCounts) %in% human)
 # Mode   FALSE    TRUE    NA's 
 # logical  492093     224       0
 
-weevil <- scan("../data/weevilContamination.id", what = "")
+weevil <- scan("data/weevilContamination.id", what = "")
 str(weevil) # chr [1:403] "WPW_Inoculation_Trinity_C500_comp100267_c0_seq1" ...
 summary(colnames(rawSailfishCounts) %in% weevil)
 # Mode   FALSE    TRUE    NA's 
 # logical  491914     403       0
 
-fungal <- scan("../data/fungalContamination.id", what = "")
+fungal <- scan("data/fungalContamination.id", what = "")
 str(fungal) # chr [1:8361] "WPW_Inoculation_Trinity_C500_comp100413_c0_seq1" ...
 summary(colnames(rawSailfishCounts) %in% fungal)
 #    Mode   FALSE    TRUE    NA's 
@@ -96,7 +96,7 @@ test_that("Sailfish output has 483047 rows after rRNA filtering",
 
 
 ## enact the row / column transposition now
-write.table(t(rawSailfishCounts), "../data/consolidated-Sailfish-results.txt",
+write.table(t(rawSailfishCounts), "data/consolidated-Sailfish-results.txt",
             sep = "\t", quote = FALSE)
 
 
@@ -126,5 +126,5 @@ expDes$grp <- with(expDes, interaction(gType, tx))
 expDes
 str(expDes)
 
-write.table(expDes, "../data/White_Pine_Weevil_exp_design.tsv",
+write.table(expDes, "data/White_Pine_Weevil_exp_design.tsv",
             sep = "\t", quote = FALSE, row.names = FALSE)
