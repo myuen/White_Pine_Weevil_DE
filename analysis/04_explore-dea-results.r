@@ -19,13 +19,13 @@ str(x, list.len = 8) # 'data.frame':  65609 obs. of  24 variables:
 expDes <- load_expDes()
 str(expDes) # 'data.frame':  24 obs. of  6 variables:
 sidf <- load_focus_statInf()
-str(sidf) # 'data.frame':  328045 obs. of  9 variables:
+str(sidf)
 
 #' Explore the distribution of the estimated "weevil" effect of interest, i.e.
 #' the difference between the interaction terms
 
 #+ weevil-estimates, fig.show='hold', out.width='50%', message = FALSE
-p <- ggplot(subset(sidf, focus_term == "weevil"), aes(x = logFC))
+p <- ggplot(subset(sidf, focus_term == "induced_vs_const"), aes(x = logFC))
 p + geom_histogram()
 p + geom_density()
 
