@@ -3,11 +3,11 @@ library(ggplot2)
 library(plyr)
 library(testthat) # facilitate tests that will catch changes on re-analysis
 
-### Differential Expression Analysis on Sitka Spruce Weevil 
+
 ### Experiment with limma + voom
 
 # Load counts from Sailfish
-rawSailfishCounts <- read.delim("../data/consolidated-Sailfish-results.txt")
+rawSailfishCounts <- read.delim("./data/consolidated-Sailfish-results.txt")
 str(rawSailfishCounts) # 'data.frame':  483047 obs. of  24 variables:
 test_that("Sailfish data has 483047 rows upon import",
           expect_equal(483047, nrow(rawSailfishCounts)))
@@ -50,11 +50,11 @@ ggsave("figure/02_pre-dea-filtering-preDE-filtering.png", plot = p,
 # Filtering low expression genes
 # We are setting an arbitary threshold and only keeping contigs with more than
 # 1 count-per-million (cpm) in at least 2 samples
-y <- y[(rowSums(cpm(y) > 1) > 1), ]
-test_that("After low expression filter, we have 65600 rows",
-          expect_equal(65600, nrow(y)))
-# 65600 (down from 483047) ~= we have about 13% of original rows
+y <- y[(rowSums(cpm(y) > 1) > 2), ]
+test_that("After low expression filter, we have 58104 rows",
+          expect_equal(58104, nrow(y)))
+# 58104 (down from 483047)
 
 ## write to file
-write.table(y$counts, "../data/consolidated-filtered-Sailfish-results.txt",
+write.table(y$counts, "data/consolidated-filtered-Sailfish-results.txt",
             sep = "\t", quote = FALSE)
