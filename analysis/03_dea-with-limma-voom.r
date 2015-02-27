@@ -96,17 +96,17 @@ fit3 <- eBayes(fit2)
 
 summary(decideTests(fit3, p.value = 0.01, lfc = 2))
 #    wound_Q903 wound_H898 feed_Q903 feed_H898 combined_effect_Q903
-# -1          1          0      4632         4                 3896
-# 0       65599      65600     59054     65596                58117
-# 1           0          0      1914         0                 3587
+# -1          1          0      4321         2                 3618
+# 0       58103      58104     52302     58102                51825
+# 1           0          0      1481         0                 2661
 #    combined_effect_H898 ctrl_vs_ctrl wound_vs_wound gallery_vs_gallery
-# -1                    2         3679           3769               4390
-# 0                 65597        57989          57971              55130
-# 1                     1         3932           3860               6080
+# -1                    2         3377           3490               3702
+# 0                 58102        51092          51027              48696
+# 1                     0         3635           3587               5706
 #    wounding_diff feeding_diff combined_diff induced_vs_const
-# -1             0           99           175             5804
-# 0          65600        64872         65151            56611
-# 1              0          629           274             3185
+# -1             0           99           131             5544
+# 0          58104        57357         57725            49546
+# 1              0          648           248             3014
 
 focus_terms <- colnames(cont_matrix)
 
@@ -125,17 +125,20 @@ statInf_focus_terms <-
 statInf_focus_terms <-
   statInf_focus_terms[ ,c("contig",
                           setdiff(names(statInf_focus_terms),"contig"))]
+
 str(statInf_focus_terms)
 
 
-test_that("stat inf on the focus terms has 852,800 rows",
-          expect_equal(65600 * 13, nrow(statInf_focus_terms)))
+test_that("stat inf on the focus terms has 755,352 rows",
+          expect_equal(58104 * 13, nrow(statInf_focus_terms)))
 
 (t_medians <- aggregate(t ~ focus_term, statInf_focus_terms, median))
 
-all.equal(t_medians$t, c(0.093017448, 0.012387609, -0.164613806, -0.093503376, 
-            0.021539496, -0.089969465, 0.162680935, 0.011875199, 
-            0.118430987, -0.067642621, 0.052106222, 0.007929199, -0.321207705))
+all.equal(t_medians$t, 
+          c(0.049744821, -0.002146165, -0.208963248, -0.074254685, 
+            -0.091773909, -0.093418364, 0.116999851, 0.015444845,
+            0.198138740, -0.051140065, 0.103334093, 0.059183495,
+            -0.342118463))
 
 write.table(statInf_focus_terms,
             "../results/limma-results-focus-terms.tsv",
