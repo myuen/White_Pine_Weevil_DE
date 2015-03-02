@@ -20,20 +20,23 @@ volcanoPlot <- function(df, lfc, pCutoff, title) {
 ## function to plot logFC against Average Expression
 plotFC2AvgExpr <- function(df, focus, lfc, pCutoff) {
   g <- ggplot(subset(df, focus_term == focus & adj.P.Val > pCutoff), 
-              aes(x = 2 ^ AveExpr, y = logFC)) + geom_point(shape = 20, color = "#666666") + 
-    # up regulated data points
+              aes(x = AveExpr, y = logFC)) + 
+    # stat insignificant data points
+    geom_point(shape = 20, color = "#666666", size = 1) + 
+    # stat. sig. and up regulated data points
     geom_point(data = subset(df, focus_term == focus & 
-                               adj.P.Val <= pCutoff & logFC > lfc),
-               aes(x = 2 ^ AveExpr, y = logFC), colour = "red", shape = 17) + 
-    # down regulated data points
+                               adj.P.Val <= pCutoff & logFC >= lfc),
+               aes(x = AveExpr, y = logFC),
+               colour = "red", fill = "red", shape = 24, size = 0.8) + 
+    # stat. sig. and down regulated data points
     geom_point(data = subset(df, df$focus_term == focus & 
-                               adj.P.Val <= pCutoff & logFC < lfc),
-               aes(x = 2 ^ AveExpr, y = logFC), colour = "red", fill= "red", shape = 25) + 
+                               adj.P.Val <= pCutoff & logFC <= (-1 * lfc)),
+               aes(x = AveExpr, y = logFC), 
+               colour = "blue", fill= "blue", shape = 25, size = 0.8) + 
     geom_abline(aes(intercept = 0, slope = 0), colour = "black") + 
-    scale_x_log10(breaks=c(0.1, 1, 10, 100, 1000), labels=c(0.1, 1, 10, 100, 1000)) + 
     scale_y_continuous(limits = c(-20, 20)) + theme_bw() +
     labs(title = paste0("logFC against Expression in ", focus), 
-         x = "Average Expression Counts", y = "Log 2 Fold Changes") +
+         x = "Log 2 Average Expression Counts", y = "Log 2 Fold Changes") +
     theme(plot.title = element_text(size = rel(2)))
   return (g)
 }
