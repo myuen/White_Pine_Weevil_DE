@@ -103,12 +103,13 @@ statInf_focus_terms <-
 
 str(statInf_focus_terms)
 
-test_that("stat inf on the focus terms has 755,352 rows",
+test_that("stat inf on the focus terms has 290,520 rows",
           expect_equal(58104 * 5, nrow(statInf_focus_terms)))
 
 (t_medians <- aggregate(t ~ focus_term, statInf_focus_terms, median))
 
-all.equal(t_medians$t, c(0.11699985, -0.20896325, -0.07425468, -0.09177391, -0.09341836))
+all.equal(t_medians$t, c(0.11699985, -0.20896325, -0.07425468, 
+                         -0.09177391, -0.09341836))
 
 write.table(statInf_focus_terms,
             "../results/limma-results-focus-terms.tsv",
