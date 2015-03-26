@@ -17,7 +17,7 @@ source("helper02_load-exp-des.r")
 
 #' Load counts from Sailfish
 x <- load_counts() # takes a few moments
-str(x, list.len = 8) # 'data.frame':  65600 obs. of  24 variables:
+str(x, list.len = 8) # 'data.frame':  58104 obs. of  24 variables
 
 #' Load experimental design
 expDes <- load_expDes()
@@ -60,34 +60,17 @@ fit <- lmFit(v, modMat)
 
 cont_matrix <-
   makeContrasts(
-    # A - Within genotype comparisons
-    # A1 - Wound vs. Control
-    wound_Q903 = txWound,
-    wound_H898 = txWound + gTypeH898res_txWound,
-    # A2 - Gallery vs. Wound
-    feed_Q903 = txGallery - txWound,
-    feed_H898 = txGallery - txWound +
+    # A - Between genotype comparisons
+    # A1 - constitutive difference (H898 control - Q903 control)
+    constDiff = gTypeH898res,
+    # B - Within genotype comparisons
+    # B1 - Weevil Induced (Gallery vs. Wound)
+    weevilInd_Q903 = txGallery - txWound,
+    weevilInd_H898 = txGallery - txWound +
       gTypeH898res_txGallery - gTypeH898res_txWound,
-    # A3 - Gallery vs. Control (combined effect of wounding and feeding)
-    combined_effect_Q903 = txGallery,
-    combined_effect_H898 = txGallery + gTypeH898res_txGallery,
-    # B - Between genotype comparisons
-    # B1 - control vs control
-    ctrl_vs_ctrl = gTypeH898res,
-    # B2 - wound vs wound
-    wound_vs_wound = gTypeH898res + gTypeH898res_txWound,
-    # B3 - gallery vs gallery
-    gallery_vs_gallery = gTypeH898res + gTypeH898res_txGallery,
-    # C - Comparison of comparison
-    # C1 -  Mwounding vs. wounding
-    wounding_diff = gTypeH898res_txWound,
-    # C2 - feeding vs. feeding i.e. (H898G - H898W) - (Q903G - Q903W)
-    feeding_diff = gTypeH898res_txGallery - gTypeH898res_txWound,
-    # C3 - combined effect vs. combined effect i.e. (H898G - H898C) - (Q903G - Q903C)
-    combined_diff = gTypeH898res_txGallery,
-    # D - Special case 
-    # D1 - Induced vs Constitutive (Q903G - Q903W) - (H898C - Q903C)
-    induced_vs_const = txGallery - txWound - gTypeH898res,
+    # B2 - Gallery vs. Control (Weevil Control)
+    weevilCtrl_Q903 = txGallery,
+    weevilCtrl_H898 = txGallery + gTypeH898res_txGallery,
     levels = modMat)
 
 fit2 <- contrasts.fit(fit, cont_matrix)
@@ -95,18 +78,10 @@ fit2 <- contrasts.fit(fit, cont_matrix)
 fit3 <- eBayes(fit2)
 
 summary(decideTests(fit3, p.value = 0.01, lfc = 2))
-#    wound_Q903 wound_H898 feed_Q903 feed_H898 combined_effect_Q903
-# -1          1          0      4321         2                 3618
-# 0       58103      58104     52302     58102                51825
-# 1           0          0      1481         0                 2661
-#    combined_effect_H898 ctrl_vs_ctrl wound_vs_wound gallery_vs_gallery
-# -1                    2         3377           3490               3702
-# 0                 58102        51092          51027              48696
-# 1                     0         3635           3587               5706
-#    wounding_diff feeding_diff combined_diff induced_vs_const
-# -1             0           99           131             5544
-# 0          58104        57357         57725            49546
-# 1              0          648           248             3014
+#    constDiff weevilInd_Q903 weevilInd_H898 weevilCtrl_Q903 weevilCtrl_H898
+# -1      3377           4321              2            3618               2
+# 0      51092          52302          58102           51825           58102
+# 1       3635           1481              0            2661               0
 
 focus_terms <- colnames(cont_matrix)
 
@@ -128,17 +103,12 @@ statInf_focus_terms <-
 
 str(statInf_focus_terms)
 
-
 test_that("stat inf on the focus terms has 755,352 rows",
-          expect_equal(58104 * 13, nrow(statInf_focus_terms)))
+          expect_equal(58104 * 5, nrow(statInf_focus_terms)))
 
 (t_medians <- aggregate(t ~ focus_term, statInf_focus_terms, median))
 
-all.equal(t_medians$t, 
-          c(0.049744821, -0.002146165, -0.208963248, -0.074254685, 
-            -0.091773909, -0.093418364, 0.116999851, 0.015444845,
-            0.198138740, -0.051140065, 0.103334093, 0.059183495,
-            -0.342118463))
+all.equal(t_medians$t, c(0.11699985, -0.20896325, -0.07425468, -0.09177391, -0.09341836))
 
 write.table(statInf_focus_terms,
             "../results/limma-results-focus-terms.tsv",
