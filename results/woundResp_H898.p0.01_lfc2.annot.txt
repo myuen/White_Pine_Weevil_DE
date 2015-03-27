@@ -1,0 +1,1 @@
+contig	focus_term	logFC	AveExpr	t	P.Value	adj.P.Val	B	annot
