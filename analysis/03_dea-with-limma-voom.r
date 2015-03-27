@@ -64,11 +64,14 @@ cont_matrix <-
     # A1 - constitutive difference (H898 control - Q903 control)
     constDiff = gTypeH898res,
     # B - Within genotype comparisons
-    # B1 - Weevil Induced (Gallery vs. Wound)
+    # B1 - Wound Response (Wound - Control)
+    woundResp_Q903 = txWound,
+    woundResp_H898 = txWound + gTypeH898res_txWound,
+    # B1 - Weevil Induced (Gallery - Wound)
     weevilInd_Q903 = txGallery - txWound,
     weevilInd_H898 = txGallery - txWound +
       gTypeH898res_txGallery - gTypeH898res_txWound,
-    # B2 - Gallery vs. Control (Weevil Control)
+    # B2 - Weevil Control (Gallery - Control)
     weevilCtrl_Q903 = txGallery,
     weevilCtrl_H898 = txGallery + gTypeH898res_txGallery,
     levels = modMat)
@@ -78,10 +81,15 @@ fit2 <- contrasts.fit(fit, cont_matrix)
 fit3 <- eBayes(fit2)
 
 summary(decideTests(fit3, p.value = 0.01, lfc = 2))
-#    constDiff weevilInd_Q903 weevilInd_H898 weevilCtrl_Q903 weevilCtrl_H898
-# -1      3377           4321              2            3618               2
-# 0      51092          52302          58102           51825           58102
-# 1       3635           1481              0            2661               0
+#    constDiff woundResp_Q903 woundResp_H898 weevilInd_Q903
+# -1      3377              1              0           4321
+# 0      51092          58103          58104          52302
+# 1       3635              0              0           1481
+
+#    weevilInd_H898 weevilCtrl_Q903 weevilCtrl_H898
+# -1              2            3618               2
+# 0           58102           51825           58102
+# 1               0            2661               0
 
 focus_terms <- colnames(cont_matrix)
 
@@ -103,13 +111,13 @@ statInf_focus_terms <-
 
 str(statInf_focus_terms)
 
-test_that("stat inf on the focus terms has 290,520 rows",
-          expect_equal(58104 * 5, nrow(statInf_focus_terms)))
+test_that("stat inf on the focus terms has 406,728 rows",
+          expect_equal(58104 * 7, nrow(statInf_focus_terms)))
 
 (t_medians <- aggregate(t ~ focus_term, statInf_focus_terms, median))
 
-all.equal(t_medians$t, c(0.11699985, -0.20896325, -0.07425468, 
-                         -0.09177391, -0.09341836))
+all.equal(t_medians$t, c(0.11699985, 0.0497448213, -0.0021461646, -0.2089632477,
+                         -0.0742546845, -0.0917739088, -0.0934183638))
 
 write.table(statInf_focus_terms,
             "../results/limma-results-focus-terms.tsv",
