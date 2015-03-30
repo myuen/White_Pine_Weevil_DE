@@ -8,30 +8,19 @@ source("helper05_figures-maker.R")
 sidf <- load_focus_statInf()
 str(sidf)
 
-# sidf_wide  <- reshape(sidf, direction = "wide", 
-#                       timevar = "focus_term", idvar = c("contig"), 
-#                       drop = c("F", "P.Value", "B", "AveExpr", "t"))
-# str(sidf_wide)
-
-
-# topN <- 200
 lfc <- 2
 pCutoff <- 0.01
 
+# woundResp_H898 produce no diff exp and exluded from list
+focus_terms <- c("constDiff", "woundResp_Q903", 
+                  "weevilInd_Q903", "weevilInd_H898", 
+                  "weevilCtrl_Q903", "weevilCtrl_H898")
 
-# Volcano plot for (Q903G - Q903C) - (H898C - Q903C)
-
-# needs a better title for plot
-ivc_vp <- volcanoPlot(
-  df = subset(sidf, sidf$focus == "induced_vs_const"), lfc, pCutoff, 
-  "Volcano Plot for Q903C Inducible Expression to Control Constitutive Expression")
-
-ggsave("../results/figures/inducible_vs_constitutive_vPlot.png", 
-       plot = ivc_vp, height = 8.5, width = 11)
-
-
-# Log 2 Fold Change against Average Expression Counts
-ivc_logFC2avgExpr <- plotFC2AvgExpr(sidf, "induced_vs_const", lfc, pCutoff)
-
-ggsave("../results/figures/inducible_vs_constitutive_logFC2avgExpr.png", 
-       plot = ivc_logFC2avgExpr, height = 8.5, width = 11)
+lapply(focus_terms, function(x) {
+  p <- volcanoPlot(subset(sidf, sidf$focus_term == x), lfc, pCutoff, x);
+  
+  ggsave(paste0("../results/figures/", x, "_vPlot.png"), 
+         plot = p, height = 8.5, width = 11)
+  
+  }
+)
