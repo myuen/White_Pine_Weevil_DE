@@ -1,29 +1,15 @@
 library(edgeR)
-library(grid)
 library(vegan)
-library(NMF)
-library(RColorBrewer)
+library(d3heatmap)
 
-
-# Putative Phenylpropanoid Pathway Enzymes
-ppid <- scan("data/putativePhenylpropanoidEnz.id", what = "character")
-length(ppid)
-# [1] 322
-
-lid <- scan("data/putativeLignanBiosynEnzymes.id", what = "character")
-length(lid)
-# [1] 68
-
-mevmepid <- scan("data/putativeMevMepEnzymes.id", what = "character")
-length(mevmepid)
-# [1] 125
 
 setwd("analysis/")
-
 source("helper03_load-focus-statinf.r")
+
 
 lfc <- 2
 pCutoff <- 0.01
+
 
 rawSailfishCounts <- read.delim("../data/consolidated-Sailfish-results.txt")
 str(rawSailfishCounts) # 'data.frame':  483047 obs. of  24 variables:
@@ -39,77 +25,55 @@ avgCPM <- data.frame("H898C" = rowMeans(cpmCounts[,1:4]),
                      "Q903W" = rowMeans(cpmCounts[,21:24]))
 str(avgCPM) #483047 obs. of  6 variables
 
-###
 
 sidf <- load_focus_statInf()
-str(sidf)
+str(sidf) # 406728 obs.
+
+
+annots <- read.delim(
+  "../results/WPW_Inoculation_Trinity_C500.diffExp.lfc2.blastxNr.collapsed.txt", row.names = 1)
+annots$annot <- as.character(annots$annot)
+dim(annots) # [1] 12852     2
+
 
 ### Weevil Induce Q903 (Q903G - Q903W)
 weevilInd_q903 <- (subset(sidf, sidf$focus_term == "weevilInd_Q903" & 
                             sidf$adj.P.Val <= pCutoff & abs(sidf$logFC) >= lfc))
-dim(weevilInd_q903)
-# [1] 5802    8
+dim(weevilInd_q903) # [1] 5802    8
 
 
-table(weevilInd_q903$contig %in% ppid)
-# FALSE  TRUE 
-# 5730    72 
-
-table(weevilInd_q903$contig %in% lid)
-# FALSE  TRUE 
-# 5783    19 
-
-table(weevilInd_q903$contig %in% mevmepid)
-# FALSE  TRUE 
-# 5797     5 
-
-weevilInd_q903[weevilInd_q903$contig %in% ppid, "Annotation"] <- "Phenylpropanoid Biosyn"
-weevilInd_q903[weevilInd_q903$contig %in% lid, "Annotation"] <- "Lignan Biosyn"
-weevilInd_q903[weevilInd_q903$contig %in% mevmepid, "Annotation"] <- "MEV/MEP"
-
-table(weevilInd_q903$Annotation)
-#          Lignan Biosyn                MEV/MEP                    N/A Phenylpropanoid Biosyn 
-#                     19                      5                   5722                     56 
-
-weevilInd_q903[is.na(weevilInd_q903$Annotation), "RowLab"] <- ""
-
-weevilInd_q903[!is.na(weevilInd_q903$Annotation), "RowLab"] <- 
-  gsub("WPW_Inoculation_Trinity_C500_", "", 
-       weevilInd_q903[!is.na(weevilInd_q903$Annotation), "contig"])
-
-
-# FOR DEBUG
-# head(weevilInd_q903[!is.na(weevilInd_q903$Annotation),])
-
-
+# Subset weevilInd_Q903 DE contigs from avgCPM
 weevilInd_q903_avgCPM <- avgCPM[rownames(avgCPM) %in% weevilInd_q903$contig,]
-dim(weevilInd_q903_avgCPM)
-# [1] 5802    6
+dim(weevilInd_q903_avgCPM) # [1] 5802    6
 
 
-# Creating dendrogram with just the 2 libraries
-# data.dist <- vegdist(weevilInd_q903_avgCPM, method = "bray")
-weevilInd_q903_avgCPM_dist <- 
-  vegdist(weevilInd_q903_avgCPM[,c("Q903G", "Q903W")], method = "jaccard")
+# Create cellnote when mouse hover over
+weevilInd_q903_cellnote <- weevilInd_q903_avgCPM
 
-weevilInd_q903_avgCPM_clusters <- hclust(weevilInd_q903_avgCPM_dist, "ward.D2")
+for (i in 1:6) {
+  weevilInd_q903_cellnote[, i] <- 
+    paste("CPM : ", weevilInd_q903_cellnote[, i], "\n",
+          "Annot : ", annots[rownames(weevilInd_q903_cellnote), "annot"])
+}
 
-weevilInd_q903_avgCPM_dendrogram <- as.dendrogram(weevilInd_q903_avgCPM_clusters)
 
-weevilInd_q903_avgCPM <- as.matrix(weevilInd_q903_avgCPM)
+weevilInd_q903_avgCPM_dist <- vegdist(weevilInd_q903_avgCPM, method = "horn")
+weevilInd_q903_avgCPM_hclust <- hclust(weevilInd_q903_avgCPM_dist, "average")
+weevilInd_q903_avgCPM_dendrogram <- as.dendrogram(weevilInd_q903_avgCPM_hclust)
 
-aheatmap(weevilInd_q903_avgCPM, 
-         color = "heat", breaks = 0,
-         border_color = NA, cellwidth = 40, 
-         scale = "row", Rowv = weevilInd_q903_avgCPM_clusters,
-         treeheight = c(200, 50), legend = TRUE,
-         annRow = weevilInd_q903$Annotation, annColors = "Set1", annLegend = TRUE,
-         labRow = weevilInd_q903$RowLab,
-         width = 20, height = 20,
-         main = "Q903 Weevil Induce (Q903G - Q903W) Comparison", 
-         sub = "Libraries", info = TRUE,
-         gp = gpar(col = "black", fontsize = 6, cexCol = 0.7, cexRow = 0.5),
-         filename = "../results/figures/weevilInd_Q903_annot_heatmap.png")
+weevilInd_q903_col_dist <- vegdist(t(weevilInd_q903_avgCPM), method = "horn")
+weevilInd_q903_col_hclust <- hclust(weevilInd_q903_col_dist, "average")
+weevilInd_q903_col_dendrogram <- as.dendrogram(weevilInd_q903_col_hclust)
+
+
+d3heatmap(as.matrix(weevilInd_q903_avgCPM), 
+          colors = heat.colors(50),
+          scale = "row",
+          Rowv = weevilInd_q903_avgCPM_dendrogram,
+          Colv = weevilInd_q903_col_dendrogram,
+          height = 8000,
+          cellnote = weevilInd_q903_cellnote,
+          anim_duration = 0)
 
 
 ### Constitutive Difference (H898C - Q903C)
@@ -118,57 +82,62 @@ constDiff <- (subset(sidf, sidf$focus_term == "constDiff" &
 dim(constDiff)
 # [1] 7012    8
 
-table(constDiff$contig %in% ppid)
-# FALSE  TRUE 
-#  6985    27 
 
-table(constDiff$contig %in% lid)
-# FALSE  TRUE 
-#  7005     7 
-
-table(constDiff$contig %in% mevmepid)
-# FALSE  TRUE 
-#  7008     4 
-
-constDiff[constDiff$contig %in% ppid, "Annotation"] <- "Phenylpropanoid Biosyn"
-constDiff[constDiff$contig %in% lid, "Annotation"] <- "Lignan Biosyn"
-constDiff[constDiff$contig %in% mevmepid, "Annotation"] <- "MEV/MEP"
-
-table(constDiff$Annotation)
-#          Lignan Biosyn                MEV/MEP                    N/A Phenylpropanoid Biosyn 
-#                     19                      5                   5722                     56 
-
-constDiff[is.na(constDiff$Annotation), "RowLab"] <- ""
-
-constDiff[!is.na(constDiff$Annotation), "RowLab"] <- 
-  gsub("WPW_Inoculation_Trinity_C500_", "", 
-       constDiff[!is.na(constDiff$Annotation), "contig"])
-
-# FOR DEBUG
-# head(constDiff[!is.na(constDiff$Annotation),])
-
-
+# Subset constDiff DE contigs from avgCPM
 constDiff_avgCPM <- avgCPM[rownames(avgCPM) %in% constDiff$contig,]
 dim(constDiff_avgCPM)
 # [1] 7012    6
 
-# constDiff_avgCPM_dist <- vegdist(constDiff_avgCPM, method = "jaccard")
-constDiff_avgCPM_dist <- 
-  vegdist(constDiff_avgCPM[,c("H898C", "Q903C")], method = "jaccard")
 
-constDiff_avgCPM_clusters <- hclust(data.dist, "ward.D2")
+# Create cellnote when mouse hover over
+constDiff_avgCPM_cellnote <- constDiff_avgCPM
 
-constDiff_avgCPM <- as.matrix(constDiff_avgCPM)
+for (i in 1:6) {
+  constDiff_avgCPM_cellnote[, i] <- 
+    paste("CPM : ", constDiff_avgCPM_cellnote[, i], "\n",
+          "Annot : ", annots[rownames(constDiff_avgCPM_cellnote), "annot"])
+}
 
-aheatmap(constDiff_avgCPM, 
-         color = "heat", breaks = 0,
-         border_color = NA, cellwidth = 40, 
-         scale = "row", Rowv = constDiff_avgCPM_clusters,
-         treeheight = c(200, 50), legend = TRUE,
-         annRow = constDiff$Annotation, annColors = "Set1", annLegend = TRUE,
-         labRow = constDiff$RowLab,
-         width = 20, height = 20,
-         main = "Constitutive Difference (H898C - Q903C) Comparison", 
-         sub = "Libraries", info = TRUE,
-         gp = gpar(col = "black", fontsize = 6, cexCol = 0.7, cexRow = 0.5),
-         filename = "../results/figures/constDiff_annot_heatmap.png")
+
+constDiff_avgCPM_dist <- vegdist(constDiff_avgCPM, method = "horn")
+constDiff_avgCPM_hclust <- hclust(constDiff_avgCPM_dist, "average")
+constDiff_avgCPM_dendrogram <- as.dendrogram(constDiff_avgCPM_hclust)
+
+constDiff_col_dist <- vegdist(t(constDiff_avgCPM), method = "horn")
+constDiff_col_hclust<- hclust(constDiff_col_dist, "average")
+constDiff_col_dendrogram <- as.dendrogram(constDiff_col_hclust)
+
+
+d3heatmap(as.matrix(constDiff_avgCPM), 
+          colors = heat.colors(50),
+          scale = "row", 
+          Rowv = constDiff_avgCPM_dendrogram,
+          Colv = constDiff_col_dendrogram,
+          height = 8000,
+          cellnote = constDiff_avgCPM_cellnote,          
+          anim_duration = 0)
+
+
+####
+
+
+identify(dendrogram)
+plot(weevilInd_q903_avgCPM_hclust, hang = -1)
+
+
+plot(weevilInd_q903_avgCPM_hclust, hang = -1, axes = FALSE)
+axis(side = 2, at = seq(0, 0.6, 0.05), col = "#F38630", labels = FALSE, lwd = 2)
+mtext(seq(0, 0.6, 0.05), side = 2, at = seq(0, 0.6, 0.05), line = 1, col = "#A38630", las = 2)
+
+branches <- cutree(weevilInd_q903_avgCPM_hclust, h = 0.1)
+
+
+# Find out the branch from genes identified from heatmap
+branches["comp435435_c0_seq4"]
+
+# Extract branch
+myBranch <- branches[branches == 11]
+length(myBranch)
+
+write.table(names(myBranch), file = "../results/branch.txt", quote = FALSE, 
+            row.names = FALSE, col.names = FALSE)
