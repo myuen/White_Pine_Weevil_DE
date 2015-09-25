@@ -31,7 +31,7 @@ ddply(sidf, ~ focus_term, function(x) {
 # BLAST results on tab-delimited format.  We get at most 10 hits per query sequences.
 annots <- read.delim("../results/WPW_Inoculation_Trinity_C500.diffExp.lfc2.blastxNr.txt", 
                      sep = "\t", header = TRUE)
-dim(annots)
+dim(annots) # [1] 129980     15
 
 
 # Function to concatenate multiple blast annontations for each query sequence
@@ -45,6 +45,11 @@ concatAnnot <- function(x) {
 annotsCollapsed <-
   ddply(annots, ~ qseqid, concatAnnot)
 colnames(annotsCollapsed) <- c("contig", "annot")
+
+
+write.table(annotsCollapsed,
+            "../results/WPW_Inoculation_Trinity_C500.diffExp.lfc2.blastxNr.collapsed.txt",
+  sep = "\t", quote = FALSE, row.names = FALSE)
 
 
 # Find all DE contigs
