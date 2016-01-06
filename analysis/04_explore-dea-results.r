@@ -15,19 +15,11 @@ source("helper02_load-exp-des.r")
 source("helper03_load-focus-statinf.r")
 
 x <- load_counts()
-str(x, list.len = 8) # 'data.frame':  65609 obs. of  24 variables:
+str(x, list.len = 8) # 'data.frame':  58104 obs. of  24 variables
 expDes <- load_expDes()
-str(expDes) # 'data.frame':  24 obs. of  6 variables:
+str(expDes) # 'data.frame':  24 obs. of  6 variables
 sidf <- load_focus_statInf()
 str(sidf)
-
-#' Explore the distribution of the estimated "weevil" effect of interest, i.e.
-#' the difference between the interaction terms
-
-#+ weevil-estimates, fig.show='hold', out.width='50%', message = FALSE
-p <- ggplot(subset(sidf, focus_term == "induced_vs_const"), aes(x = logFC))
-p + geom_histogram()
-p + geom_density()
 
 #' Explore the distribution of estimates for the various effects of interest.
 #' Note: one facet will be blank, corresponding to the test whether all terms
@@ -78,7 +70,7 @@ p + geom_density(aes(colour = focus_term))
 source("helper04_extract-and-tidy.r")
 
 #' Find the top hits w/r/t genotype effects
-y <- subset(sidf, focus_term == "gTypeH898res_all")
+y <- subset(sidf, focus_term == "constDiff")
 hit_sidf_row <- with(y, which(rank(P.Value) < 5))
 y[hit_sidf_row, ]
 hit_contig <- y$contig[hit_sidf_row]
@@ -87,32 +79,5 @@ jDat <- extract_and_tidy(hit_contig, x, expDes)
 str(jDat)
 
 p <- ggplot(jDat, aes(x = count, y = gType, colour = tx))
-p + geom_jitter(position = position_jitter(height = .15)) +
-  facet_wrap(~ contig, scales="free_x")
-
-#' Find the top hits w/r/t the weevil effect
-y <- subset(sidf, focus_term == "weevil")
-hit_sidf_row <- with(y, which(rank(P.Value) < 7))
-y[hit_sidf_row, ]
-hit_contig <- y$contig[hit_sidf_row]
-
-jDat <- extract_and_tidy(hit_contig, x, expDes)
-str(jDat)
-
-p <- ggplot(jDat, aes(x = count, y = gType, colour = tx))
-p + geom_jitter(position = position_jitter(height = .15)) +
-  facet_wrap(~ contig, scales="free_x")
-
-#' Find the top hits w/r/t genotype in the control condition specifically
-y <- subset(sidf, focus_term == "gTypeH898res_in_control")
-hit_sidf_row <- with(y, which(rank(P.Value) < 10))
-y[hit_sidf_row, ]
-hit_contig <- y$contig[hit_sidf_row]
-
-jDat <- extract_and_tidy(hit_contig, x, expDes)
-str(jDat)
-
-p <- ggplot(subset(jDat, tx == "Control"),
-            aes(x = count, y = gType))
 p + geom_jitter(position = position_jitter(height = .15)) +
   facet_wrap(~ contig, scales="free_x")
