@@ -23,6 +23,7 @@ jRowNames <- rownames(tmp)
 test_that("First Sailfish output file has 492317 rows",
           expect_equal(492317, n))
 
+
 ## Read in all Sailfish data
 system.time(
   rawSailfishCounts <-
@@ -31,11 +32,12 @@ system.time(
         read.table(x, row.names = 1, nrows = n * 1.1,
                    ## specifying colClasses speeds this up 2x
                    colClasses = rep(c("character", "numeric"), c(1, 6)))
+      colnames(jDat) <- scan(x, what = character(), skip = 4, nlines = 1)[c(-1,-2)]
       test_that("Sailfish output files have expected number of rows",
                 expect_equal(n, nrow(jDat)))
-      return(jDat$V7)
+      return(jDat$EstimatedNumKmers)
     })
-) ## ~90 seconds for JB
+)
 
 
 ## NOTE: rawSailfishCounts is transposed relative to what we expect / want at
@@ -108,8 +110,8 @@ write.table(t(rawSailfishCounts), "data/consolidated-Sailfish-results.txt",
 # presumably this is just the file name mismatch
 # diff'ing in shell turns up no differences
 
-## write design matrix
 
+## write design matrix
 expDes <- data.frame(sample = rownames(rawSailfishCounts),
                      gType = factor(substr(rownames(rawSailfishCounts), 1, 4),
                                         levels = c("Q903", "H898")),
