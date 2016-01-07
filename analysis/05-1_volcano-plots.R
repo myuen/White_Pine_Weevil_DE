@@ -8,10 +8,14 @@ source("helper05_figures-maker.R")
 sidf <- load_focus_statInf()
 str(sidf)
 
+# LogFC cutoff
 lfc <- 2
+# Adj. p-value cutoff
 pCutoff <- 0.01
 
-# woundResp_H898 produce no diff exp and exluded from list
+
+# You should be able to pass focus_terms <- levels(sidf$focus_term) to lapply
+# but one of our focus_term do not produce any sig. DE contigs and will crash ggplot
 focus_terms <- c("constDiff", "woundResp_Q903", 
                   "weevilInd_Q903", "weevilInd_H898", 
                   "weevilCtrl_Q903", "weevilCtrl_H898")
@@ -21,6 +25,5 @@ lapply(focus_terms, function(x) {
   
   ggsave(paste0("../results/figures/", x, "_vPlot.png"), 
          plot = p, height = 8.5, width = 11)
-  
   }
 )
