@@ -2,9 +2,15 @@ require (ggplot2)
 
 ## function to make Volcano plot
 volcanoPlot <- function(df, lfc, pCutoff, title) {
-  require (ggplot2)
+
+  # Plot insignificant points in black (i.e. lower than logFC cutoff 
+  # and/or insignificant p-value)
   g <- ggplot(data = subset(df, (abs(df$logFC) < lfc | df$adj.P.Val > pCutoff)), 
-              aes(x = logFC, y = -log10(adj.P.Val))) + geom_point(colour = "black", size = 1) + 
+              aes(x = logFC, y = -log10(adj.P.Val))) + 
+    geom_point(colour = "black", size = 1) + 
+
+    # Add second layer with significant points in red (i.e. higher than logFC cutoff 
+    # with stat significant p-value)
     geom_point(data = subset(df, (abs(logFC) >= lfc & adj.P.Val <= pCutoff)), 
                aes(logFC, -log10(adj.P.Val), color = "red"), size = 1) + 
     geom_abline(aes(intercept = -log10(pCutoff), slope = 0), colour = "blue") + 
