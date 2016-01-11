@@ -1,3 +1,5 @@
+# Plot logFC of multiple contrasts
+
 library(ggplot2)
 library(grid)
 
@@ -9,15 +11,20 @@ source("helper06_classifyCtgs.R")
 sidf <- load_focus_statInf()
 str(sidf)
 
-lfc <- 2
+# abs(logFC) log fold change cut-off.  Anything greater than (-1 x lfc) and less 
+# than lfc will be deemed biological insignificant
+lfcCutoff <- 2
+
+# p-value cut-off.  Anything > pCutoff will be deemed statistically insignificant.
 pCutoff <- 0.01
 
-## log FC plot of ctrl_vs_ctrl(H898C - Q903C) against combined_effect_Q903 (Q903G - Q903W)
+# List contrast to compare
+cc <- c("constDiff", "weevilInd_Q903")
 
-# subset data, in the order specificed by the user
-mDat <- subset(sidf, sidf$focus_term == "constDiff")
-mDat <- rbind(mDat, subset(sidf, sidf$focus_term == "weevilInd_Q903"))
-summary(mDat$focus_term)
+# subset data
+mDat <- subset(sidf, sidf$focus_term %in% cc)
+# summary(mDat$focus_term)
+
 
 mDat_wide <- reshape(mDat, direction = "wide", 
                      timevar = "focus_term", idvar = "contig",
@@ -25,45 +32,43 @@ mDat_wide <- reshape(mDat, direction = "wide",
 mDat_wide <- data.frame(mDat_wide, row.names = 1)
 
 
-# mDat_wide col order : 
-# 1) logFC of 1st focus, 2) adj.P.Val of 1st focus, 
-# 3) logFC of 2nd focus, 4) adj.P.Val of 2nd focus
-
 # Call function to classify contig based on stat. sig and log fold-change
-mDat_wide$type <- apply(mDat_wide, 1, classifyCtgs)
+# mDat_wide$type <- apply(mDat_wide, 1, classifyCtgs)
+mDat_wide$type <- apply(mDat_wide, 1, 
+                        function(x) classifyCtgs(x, lfcCutoff, pCutoff))
+
 
 # Re-order levels for presentation in graph
 mDat_wide$type <- 
   factor(mDat_wide$type, levels = c('UpUp', 'UpDown', 'DownUp', 'DownDown', 
                                     'SigBoring', 'NS','NSNS'))
 
-summary(mDat_wide$type)
+# summary(mDat_wide$type)
 # UpUp    UpDown    DownUp  DownDown SigBoring        NS      NSNS 
 #   40        86        59       825       666     14490     41938 
 
 
 # Plot
 q <- ggplot(subset(mDat_wide, mDat_wide$type == "NS" | mDat_wide$type == "NSNS"),
-            aes(x = logFC.constDiff, y = logFC.weevilInd_Q903)) + 
+            aes_string(x = colnames(mDat_wide)[1], y = colnames(mDat_wide)[3])) + 
   geom_point(color = "gray90", size = 1, alpha = 0.75) + 
   geom_point(data = subset(mDat_wide, mDat_wide$type != "NS" & mDat_wide$type != "NSNS"),
-             aes(x = logFC.constDiff, y = logFC.weevilInd_Q903, color = type),
-             size = 1, alpha = 0.9) + 
+             aes_string(x = colnames(mDat_wide)[1], y = colnames(mDat_wide)[3], 
+                        color = "type"), size = 1, alpha = 0.9) + 
   scale_colour_manual(
     # Change color of label
     values = c("#b2182b", "#ef8a62", "#67a9cf", "#2166ac", "gray40"), 
     # Change legend label
     labels = 
-      c("Stat. Sig. and Up Reg. in Both Contrasts",
-        "Stat. Sig. Up Reg. in Constitutive Diff. and \nDown Reg. in Q903 Weevil Induced", 
-        "Stat. Sig. Down Reg. in Constitutive Diff. and \nUp Reg. in Q903 Weevil Induced", 
-        "Stat. Sig. and Down Reg. in Both Contrasts",
-        "Stat. Sig but not Sig. Diff. Expressed"), 
+      c("Stat. Sig. and Up Regulation in Both Contrasts",
+        paste0("Stat. Sig. Up Regulation in ", cc[1] , " and \nDown Regulation in ", cc[2]), 
+        paste0("Stat. Sig. Down Regulation in ", cc[1], " and \nUp Regulation in ", cc[2]), 
+        "Stat. Sig. and Down Regulation in Both Contrasts",
+        "Stat. Sig. but not Sig. Diff. Expressed"), 
     guide = guide_legend(title = NULL)) +
-  labs(title = "Expression Fold Change for Control to Control Comparison against 
-       Combined Wounding and Feeding Effect in Q903", 
-       x = "Log 2 Fold Change for Constitutive Difference", 
-       y = "Log 2 Fold Change for Weevil Induced in Q903") + 
+  labs(title = paste0("Expression Fold Change for ", cc[1], " Compare against ", cc[2]), 
+       x = paste0("Log 2 Fold Change for ", cc[1]), 
+       y = paste0("Log 2 Fold Change for ", cc[2])) +  
   theme_bw() + 
   theme(plot.title = element_text(size = rel(2)),
         legend.position = c(0.88, 0.15),
@@ -72,6 +77,5 @@ q <- ggplot(subset(mDat_wide, mDat_wide$type == "NS" | mDat_wide$type == "NSNS")
   geom_vline(xintercept = 0, colour = "black") +
   geom_abline(aes(intercept = 0, slope = 0), colour = "black")
 
-
-ggsave("../results/figures/constDiff_To_Q903WeevilInd.png", 
+ggsave(paste0("../results/figures/", cc[1], "_To_", cc[2], ".png"), 
        plot = q, width = 16, height = 9)
