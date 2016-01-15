@@ -2,6 +2,8 @@
 
 load_expDes <- function() {
   require(testthat)  
+  require(plyr)
+  
   expDes <- read.delim("../data/White_Pine_Weevil_exp_design.tsv",
                        stringsAsFactors = FALSE)
   expDes <-
