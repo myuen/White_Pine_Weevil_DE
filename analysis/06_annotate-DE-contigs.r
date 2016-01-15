@@ -6,14 +6,20 @@ source("helper03_load-focus-statinf.r")
 sidf <- load_focus_statInf()
 str(sidf)
 
-lfc <- 2
+
+# abs(logFC) log fold change cut-off.  Anything greater than (-1 x lfc) and less 
+# than lfc will be deemed biological insignificant
+lfcCutoff <- 2
+
+# p-value cut-off.  Anything > pCutoff will be deemed statistically insignificant.
 pCutoff <- 0.01
+
 
 
 # Count all differentially expressed contigs for each focus_term
 ddply(sidf, ~ focus_term, function(x) {
-  up <- length(subset(x, x$adj.P.Val <= pCutoff & x$logFC >= lfc)[,"contig"]);
-  down <- length(subset(x, x$adj.P.Val <= pCutoff & x$logFC <= -1 * lfc)[,"contig"]);
+  up <- length(subset(x, x$adj.P.Val <= pCutoff & x$logFC >= lfcCutoff)[,"contig"]);
+  down <- length(subset(x, x$adj.P.Val <= pCutoff & x$logFC <= -1 * lfcCutoff)[,"contig"]);
   sum <- up + down;
   return (c("up" = up, "down" = down, "sum" = sum));
 })
@@ -28,7 +34,9 @@ ddply(sidf, ~ focus_term, function(x) {
 # 7 weevilCtrl_H898    0    2    2
 
 
-# BLAST results on tab-delimited format.  We get at most 10 hits per query sequences.
+# BLAST results output on tab-delimited format (i.e. run with -outfmt '6' 
+# option on comamnd line BLAST).  We ran with 10 max target hits returned 
+# per query sequences.
 annots <- read.delim("../results/WPW_Inoculation_Trinity_C500.diffExp.lfc2.blastxNr.txt", 
                      sep = "\t", header = TRUE)
 dim(annots) # [1] 129980     15
@@ -41,11 +49,10 @@ concatAnnot <- function(x) {
   return (paste(annot, collapse = " ; "))
 }
 
-
 annotsCollapsed <-
   ddply(annots, ~ qseqid, concatAnnot)
 colnames(annotsCollapsed) <- c("contig", "annot")
-
+str(annotsCollapsed)
 
 write.table(annotsCollapsed,
             "../results/WPW_Inoculation_Trinity_C500.diffExp.lfc2.blastxNr.collapsed.txt",
@@ -60,11 +67,7 @@ sigDE <-
           tmp_sigDE <- tmp_sigDE[order(tmp_sigDE$logFC, decreasing = TRUE), ];
         })
 
-
-focus_terms <- c("constDiff", "woundResp_Q903", "woundResp_H898",
-                 "weevilInd_Q903", "weevilInd_H898", 
-                 "weevilCtrl_Q903", "weevilCtrl_H898")
-
+focus_terms <- as.vector(levels(sidf$focus_term))
 
 lapply(focus_terms, function(x) {
   write.table(
@@ -74,16 +77,13 @@ lapply(focus_terms, function(x) {
 })
 
 
-#####
-
-
 # function to contigs that are common between two given focus_terms
 findCommonContigs <- function(df, pCutoff, lfc, x, y) {
   subset(df, eval(parse(
     text = paste0("df$adj.P.Val.", x, " <= ", pCutoff, " & ",
                   "df$adj.P.Val.", y, " <= ", pCutoff, " & ",
-                  "abs(df$logFC.", x, ") >= ", lfc, " & ",
-                  "abs(df$logFC.", y, ") >= ", lfc)))) 
+                  "abs(df$logFC.", x, ") >= ", lfcCutoff, " & ",
+                  "abs(df$logFC.", y, ") >= ", lfcCutoff)))) 
 }
 
 
