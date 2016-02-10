@@ -22,19 +22,17 @@ pCutoff <- 0.01
 
 
 rawSailfishCounts <- read.delim("../data/consolidated-Sailfish-results.txt")
-# str(rawSailfishCounts) # 'data.frame':  483047 obs. of  24 variables:
 
 
 expDes <- load_expDes()
-expDes$grp <- # not really sure that we need this?
+expDes$grp <-
   with(expDes, factor(grp,
                       levels = paste(levels(gType),
                                      rep(levels(tx), each = 2), sep = ".")))
-# str(expDes) # 'data.frame':  24 obs. of  6 variables
 
 
 cpmCounts <- cpm(rawSailfishCounts)
-# str(cpmCounts)
+
 
 avgCPM <- ddply(expDes, ~grp, function(x) {
   df <- rowMeans(cpmCounts[,c(expDes[expDes$grp == x$grp,]$sample)])
@@ -47,12 +45,10 @@ avgCPM <- t(avgCPM)
 
 
 row.names(avgCPM) <- gsub("WPW_Inoculation_Trinity_C500_", "", row.names(avgCPM))
-# str(avgCPM) #483047 obs. of  6 variables
 
 
 sidf <- load_focus_statInf()
 sidf$contig <- as.character(gsub("WPW_Inoculation_Trinity_C500_", "", sidf$contig))
-# str(sidf) # 406728 obs.
 
 
 annots <- read.delim(
@@ -60,18 +56,15 @@ annots <- read.delim(
   row.names = 1)
 row.names(annots) <- gsub("WPW_Inoculation_Trinity_C500_", "", row.names(annots))
 annots$annot <- as.character(annots$annot)
-# str(annots) # [1] 12852     2
 
 
 ### Weevil Induce Q903 (Q903G - Q903W)
 weevilInd_q903 <- (subset(sidf, sidf$focus_term == "weevilInd_Q903" & 
                             sidf$adj.P.Val <= pCutoff & abs(sidf$logFC) >= lfcCutoff))
-# dim(weevilInd_q903) # [1] 5802    8
 
 
 # Subset weevilInd_Q903 DE contigs from avgCPM
 weevilInd_q903_avgCPM <- avgCPM[rownames(avgCPM) %in% weevilInd_q903$contig,]
-# dim(weevilInd_q903_avgCPM) # [1] 5802    6
 
 
 # Create cellnote when mouse hover over
