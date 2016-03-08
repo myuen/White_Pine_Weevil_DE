@@ -4,6 +4,7 @@ opts_chunk$set(fig.path = 'figure/03-dea-with-limma-voom-')
 
 library(edgeR)
 library(plyr)
+library(reshape2)
 library(testthat) # facilitate tests that will catch changes on re-analysis
 
 ### Differential Expression Analysis on Sitka Spruce Weevil 
@@ -11,7 +12,6 @@ library(testthat) # facilitate tests that will catch changes on re-analysis
 
 #' Source purpose-built functions to load and validate the data and the 
 #' experimental design. Then call them.
-setwd("analysis/")
 source("helper01_load-counts.r")
 source("helper02_load-exp-des.r")
 
@@ -122,3 +122,15 @@ all.equal(t_medians$t, c(0.11699985, 0.0497448213, -0.0021461646, -0.2089632477,
 write.table(statInf_focus_terms,
             "../results/limma-results-focus-terms.tsv",
             quote = FALSE, sep = "\t", row.names = FALSE)
+
+statInf_focus_terms.wide <- reshape(statInf_focus_terms, direction = "wide",
+                                    timevar = "focus_term", idvar = "contig",
+                                    new.row.names = unique(statInf_focus_terms$contig),
+                                    drop = c("contig", "AveExpr", "t", "P.Value", "B"))
+
+statInf_focus_terms.wide <- statInf_focus_terms.wide[, 
+                                   colnames(statInf_focus_terms.wide)[-1]]
+
+write.table(statInf_focus_terms.wide,
+            "../results/limma-results-focus-terms.wide.tsv",
+            quote = FALSE, sep = "\t", row.names = TRUE)
