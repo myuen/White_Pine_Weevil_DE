@@ -12,6 +12,7 @@ library(testthat) # facilitate tests that will catch changes on re-analysis
 
 #' Source purpose-built functions to load and validate the data and the 
 #' experimental design. Then call them.
+setwd("analysis/")
 source("helper01_load-counts.r")
 source("helper02_load-exp-des.r")
 
@@ -33,6 +34,10 @@ y <- DGEList(counts = x, group = expDes$grp)
 
 #' TMM Normalization by Depth
 y <- calcNormFactors(y)
+
+#' Write CPM output for heatmap and contig plotting
+write.table(cpm(y), file = "../results/normalized_cpm.txt", quote = FALSE,
+            row.names = TRUE, col.names = TRUE)
 
 #' make model matrix
 modMat <- model.matrix(~ gType * tx, expDes)
