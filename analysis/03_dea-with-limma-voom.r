@@ -114,7 +114,10 @@ statInf_focus_terms <-
 str(statInf_focus_terms)
 # 'data.frame':	267379 obs. of  9 variables:
 
-statInf_focus_terms$focus_term <- factor(statInf_focus_terms$focus_term)
+statInf_focus_terms$focus_term <- 
+  factor(statInf_focus_terms$focus_term, 
+         levels = c("constDiff", "woundResp_Q903", "woundResp_H898", "weevilInd_Q903",
+                    "weevilInd_H898", "weevilCtrl_Q903", "weevilCtrl_H898"))
 
 # Reorganize columns
 statInf_focus_terms <- 
@@ -127,9 +130,9 @@ options(digits = 15)
 (t_medians <- aggregate(t ~ focus_term, statInf_focus_terms, median))
 
 all.equal(t_medians$t, 
-          c(0.11886468313334492, -0.10327785045908873, -0.00798612294370277,
-            -0.10336498104535216, -0.09816757866141612, -0.00856661400850118,
-            0.04949321203384519))
+          c(0.11886468313334492, 0.04949321203384519, -0.00856661400850118,
+            -0.09816757866141612, -0.10336498104535216,
+            -0.00798612294370277, -0.10327785045908873))
 
 write.table(statInf_focus_terms,
             "../results/limma-results-focus-terms.15July.tsv",
