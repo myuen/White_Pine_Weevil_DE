@@ -1,7 +1,14 @@
-White_Pine_Weevil_DE
+White Pine Weevil Differential Expression Analysis Experiment
 ====================
 
-White Pine Weevil Differential Expression Analysis Experiment
+Using RNA-Seq, we study the innate defense response from Sitka sprice susceptible genotype Q903 and resistance genotype H898.
+
+Putative Manuscript title here ...
+
+Putative Abstract ...
+
+
+
 
 For the current best model exposition, go here: [model-exposition/03_model-exposition.md](model-exposition/03_model-exposition.md)
 
