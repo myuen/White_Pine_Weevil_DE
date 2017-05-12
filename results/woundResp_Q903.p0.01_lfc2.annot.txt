@@ -1,2 +1,0 @@
-contig	focus_term	logFC	AveExpr	t	P.Value	adj.P.Val	B	annot
-WPW_Inoculation_Trinity_C500_comp419221_c0_seq6	woundResp_Q903	-6.47164773591188	-5.50596862420418	-7.86899533295121	1.20677960601979e-07	0.0070118722228174	3.0291436965807	unknown [Picea sitchensis] ; unknown [Picea sitchensis]
