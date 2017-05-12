@@ -16,19 +16,19 @@ str(sidf)
 lfcCutoff <- 2
 
 # p-value cut-off.  Anything > pCutoff will be deemed statistically insignificant.
-pCutoff <- 0.01
+pCutoff <- 0.05
 
 # List contrast to compare
 cc <- c("constDiff", "weevilInd_Q903")
 
 # subset data
 mDat <- subset(sidf, sidf$focus_term %in% cc)
-# summary(mDat$focus_term)
+summary(mDat$focus_term)
 
 
 mDat_wide <- reshape(mDat, direction = "wide", 
-                     timevar = "focus_term", idvar = "contig",
-                     drop = c("F", "P.Value", "B", "AveExpr", "t"))
+                     timevar = "focus_term", idvar = "cds",
+                     drop = c("F", "P.Value", "B", "AveExpr", "t", "contig"))
 mDat_wide <- data.frame(mDat_wide, row.names = 1)
 
 
@@ -43,9 +43,9 @@ mDat_wide$type <-
   factor(mDat_wide$type, levels = c('UpUp', 'UpDown', 'DownUp', 'DownDown', 
                                     'SigBoring', 'NS','NSNS'))
 
-# summary(mDat_wide$type)
-# UpUp    UpDown    DownUp  DownDown SigBoring        NS      NSNS 
-#   40        86        59       825       666     14490     41938 
+summary(mDat_wide$type)
+#      UpUp    UpDown    DownUp  DownDown SigBoring        NS      NSNS 
+#        87       106        65       641      1385     13338     22985 
 
 
 # Plot
@@ -77,5 +77,5 @@ q <- ggplot(subset(mDat_wide, mDat_wide$type == "NS" | mDat_wide$type == "NSNS")
   geom_vline(xintercept = 0, colour = "black") +
   geom_abline(aes(intercept = 0, slope = 0), colour = "black")
 
-ggsave(paste0("../results/figures/", cc[1], "_To_", cc[2], ".png"), 
+ggsave(paste0("../results/figures/", cc[1], "_To_", cc[2], ".31May2016.png"), 
        plot = q, width = 16, height = 9)
