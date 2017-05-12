@@ -29,20 +29,12 @@ pCutoff <- 0.05
 # 6 weevilCtrl_Q903 3319 3925 7244
 # 7 weevilCtrl_H898    2    1    3
 
-focus_terms <- c("constDiff", "weevilInd_Q903", "weevilCtrl_Q903")
-
-# lapply(focus_terms, function(x) {
-#   p <- volcanoPlot(subset(sidf, sidf$focus_term == x), lfcCutoff, pCutoff, x);
-#   
-#   ggsave(paste0("../results/figures/", x, "_vPlot.31May2016.png"), 
-#          plot = p, height = 8.5, width = 11)
-#   }
-# )
+focus_terms <- levels(sidf$focus_term)
 
 map(focus_terms, function(x) {
-  p <- volcanoPlot(subset(sidf, sidf$focus_term == x), lfcCutoff, pCutoff, x);
-  
-  ggsave(paste0("../results/figures/", x, "_vPlot.24Aug2016.png"), 
+  p <- volcanoPlot(subset(sidf, sidf$focus_term == x), lfcCutoff, pCutoff, x)
+
+  ggsave(paste0("../results/figures/", x, "_vPlot.5May2017.png"),
          plot = p, height = 8.5, width = 11)
-}
+  }
 )
