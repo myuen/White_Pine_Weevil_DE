@@ -15,7 +15,7 @@ source("helper02_load-exp-des.r")
 
 #' Load counts from Sailfish
 x <- load_counts() # takes a few moments
-str(x, list.len = 8) # 'data.frame':  65609 obs. of  24 variables:
+str(x, list.len = 8) # 'data.frame':	38197 obs. of  24 variables:
 
 #' Load experimental design
 expDes <- load_expDes()
@@ -45,7 +45,7 @@ v <- voom(y, modMat, plot = TRUE) # take a couple moments
 
 
 # MDS analysis
-png(filename = "../results/figures/wpw_mds.png", width = 1680, height = 1050)
+png(filename = "../results/figures/wpw_mds.31May2016.png", width = 1680, height = 1050)
 plotMDS(v, top=Inf)
 dev.off()
 
@@ -55,14 +55,17 @@ pca <- as.data.frame(prcomp(t(v$E))$x)
 
 wpw_pca <- ggplot(pca, aes(PC1, PC2, color = expDes$grp, shape = expDes$gType)) + 
   geom_point(size = 5) + scale_color_manual(
-    limits = c("H898res.Control", "H898res.Gallery", "H898res.Wound",
-               "Q903susc.Control", "Q903susc.Gallery", "Q903susc.Wound"),
-    values=c("H898res.Control" = "#4d004b",
-             "H898res.Gallery" = "#88419d",
-             "H898res.Wound" = "#8c96c6",
-             "Q903susc.Control" = "#7F0000",
-             "Q903susc.Gallery" = "#d7301f",
-             "Q903susc.Wound" = "#fc8d59")) +
-  labs(title="Voom + Limma Principal Component Analysis") + theme_bw()
+    limits = c("H898.Control", "H898.Gallery", "H898.Wound",
+               "Q903.Control", "Q903.Gallery", "Q903.Wound"),
+    values=c("H898.Control" = "#4d004b",
+             "H898.Gallery" = "#88419d",
+             "H898.Wound" = "#8c96c6",
+             "Q903.Control" = "#7F0000",
+             "Q903.Gallery" = "#d7301f",
+             "Q903.Wound" = "#fc8d59")) +
+  labs(title="Voom + Limma Principal Component Analysis", color="Groups", shape=NULL) + 
+  theme_bw() + theme(legend.position = c(0.5,0), legend.justification = c(0.5,0)) + 
+  theme(legend.key = element_blank()) + 
+  guides(colour = guide_legend(override.aes = list(shape = 15)), shape = FALSE)
 
-ggsave("../results/figures/wpw_pca.png", plot = wpw_pca, width = 16, height = 9)
+ggsave("../results/figures/wpw_pca.7Nov2016.png", plot = wpw_pca, width = 16, height = 9)
