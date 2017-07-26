@@ -16,7 +16,7 @@ str(sidf)
 lfcCutoff <- 2
 
 # p-value cut-off.  Anything > pCutoff will be deemed statistically insignificant.
-pCutoff <- 0.05
+pCutoff <- 0.01
 
 # List contrast to compare
 cc <- c("constDiff", "weevilInd_Q903")
@@ -45,7 +45,7 @@ mDat_wide$type <-
 
 summary(mDat_wide$type)
 #      UpUp    UpDown    DownUp  DownDown SigBoring        NS      NSNS 
-#        87       106        65       641      1385     13338     22985 
+#        17        35        36       491       532      9407     27679 
 
 
 # Plot
@@ -77,5 +77,5 @@ q <- ggplot(subset(mDat_wide, mDat_wide$type == "NS" | mDat_wide$type == "NSNS")
   geom_vline(xintercept = 0, colour = "black") +
   geom_abline(aes(intercept = 0, slope = 0), colour = "black")
 
-ggsave(paste0("../results/figures/", cc[1], "_To_", cc[2], ".31May2016.png"), 
+ggsave(paste0("../results/figures/", cc[1], "_To_", cc[2], ".25July2017.png"), 
        plot = q, width = 16, height = 9)
