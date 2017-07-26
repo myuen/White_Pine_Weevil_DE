@@ -1,12 +1,15 @@
+---
+output: html_document
+---
 <!---
 Create an interactive heatmap with bubble containing information of contig ID, expression value in CPM and annotation when mouse-over.
 -->
 
 
 ```{r, echo=FALSE, message=FALSE}
-library(vegan)
-library(htmlwidgets)
 library(d3heatmap)
+library(htmlwidgets)
+library(plyr)
 
 source("helper02_load-exp-des.r")
 source("helper03_load-focus-statinf.r")
@@ -20,7 +23,7 @@ lfcCutoff <- 2
 pCutoff <- 0.01
 
 
-cpmCounts <- read.table("../results/normalized_cpm.txt")
+cpmCounts <- read.table("../results/normalized_cpm.15July.txt")
 
 
 expDes <- load_expDes()
@@ -30,35 +33,35 @@ expDes$grp <-
                                      rep(levels(tx), each = 2), sep = ".")))
 
 avgCPM <- ddply(expDes, ~grp, function(x) {
-  df <- rowMeans(cpmCounts[,c(expDes[expDes$grp == x$grp,]$sample)])
+  df <- rowMeans(cpmCounts[, c(expDes[expDes$grp == x$grp,]$sample)])
   return(df)
 })
 
-avgCPM <- data.frame(avgCPM, row.names = avgCPM$grp)
-avgCPM <- avgCPM[, -1]
-avgCPM <- t(avgCPM)
-
-
-row.names(avgCPM) <- gsub("WPW_Inoculation_Trinity_C500_", "", row.names(avgCPM))
+colnames(avgCPM) <- 
+  gsub("WPW_Inoculation_Trinity_BBMerged_31May2016_TRINITY_", "", colnames(avgCPM))
+n <- avgCPM$grp
+avgCPM <- as.data.frame(t(avgCPM[,-1]))
+colnames(avgCPM) <- n
 
 
 sidf <- load_focus_statInf()
-sidf$contig <- as.character(gsub("WPW_Inoculation_Trinity_C500_", "", sidf$contig))
+sidf$cds <- 
+  as.character(gsub("WPW_Inoculation_Trinity_BBMerged_31May2016_TRINITY_", "", sidf$cds))
 
 
 annots <- read.delim(
-  "../results/WPW_Inoculation_Trinity_C500.diffExp.lfc2.blastxNr.collapsed.txt", 
-  row.names = 1)
-row.names(annots) <- gsub("WPW_Inoculation_Trinity_C500_", "", row.names(annots))
+  "../results/WPW_Inoculation_Trinity_BBMerged_31May2016.transdecoder.cds.nr.diffExp.blastxNR.collapsed.txt", row.names = 1)
+row.names(annots) <- 
+  gsub("WPW_Inoculation_Trinity_BBMerged_31May2016_TRINITY_", "", row.names(annots))
 annots$annot <- as.character(annots$annot)
 
 
 # Weevil Induce Q903 (Q903G - Q903W)
-weevilInd_q903 <- (subset(sidf, sidf$focus_term == "weevilInd_Q903" & 
-                            sidf$adj.P.Val <= pCutoff & abs(sidf$logFC) >= lfcCutoff))
+weevilInd_q903 <- subset(sidf, sidf$focus_term == "weevilInd_Q903" & 
+                            sidf$adj.P.Val <= pCutoff & abs(sidf$logFC) >= lfcCutoff)
 
 # Subset weevilInd_Q903 DE contigs from avgCPM
-weevilInd_q903_avgCPM <- avgCPM[rownames(avgCPM) %in% weevilInd_q903$contig,]
+weevilInd_q903_avgCPM <- avgCPM[rownames(avgCPM) %in% weevilInd_q903$cds,]
 
 
 # Create cellnote when mouse hover over
@@ -72,13 +75,12 @@ for (i in 1:6) {
 }
 
 
-weevilInd_q903_row_dist <- vegdist(weevilInd_q903_avgCPM, method = "horn")
-weevilInd_q903_row_hclust <- hclust(weevilInd_q903_row_dist, "average")
+weevilInd_q903_row_dist <- as.dist(1 - cor(t(weevilInd_q903_avgCPM), method = "spearman"))
+weevilInd_q903_row_hclust <- hclust(weevilInd_q903_row_dist, method = "average")
 weevilInd_q903_row_dendrogram <- as.dendrogram(weevilInd_q903_row_hclust)
 
-
-weevilInd_q903_col_dist <- vegdist(t(weevilInd_q903_avgCPM), method = "horn")
-weevilInd_q903_col_hclust <- hclust(weevilInd_q903_col_dist, "average")
+weevilInd_q903_col_dist <- as.dist(1 - cor(weevilInd_q903_avgCPM, method = "spearman"))
+weevilInd_q903_col_hclust <- hclust(weevilInd_q903_col_dist, method = "average")
 weevilInd_q903_col_dendrogram <- as.dendrogram(weevilInd_q903_col_hclust)
 
 

@@ -4,9 +4,9 @@ Create an interactive heatmap with bubble containing information of contig ID, e
 
 
 ```{r, echo=FALSE, message=FALSE}
-library(vegan)
-library(htmlwidgets)
 library(d3heatmap)
+library(htmlwidgets)
+library(plyr)
 
 source("helper02_load-exp-des.r")
 source("helper03_load-focus-statinf.r")
@@ -20,7 +20,7 @@ lfcCutoff <- 2
 pCutoff <- 0.01
 
 
-cpmCounts <- read.table("../results/normalized_cpm.txt")
+cpmCounts <- read.table("../results/normalized_cpm.15July.txt")
 
 
 expDes <- load_expDes()
@@ -30,26 +30,26 @@ expDes$grp <-
                                      rep(levels(tx), each = 2), sep = ".")))
 
 avgCPM <- ddply(expDes, ~grp, function(x) {
-  df <- rowMeans(cpmCounts[,c(expDes[expDes$grp == x$grp,]$sample)])
+  df <- rowMeans(cpmCounts[, c(expDes[expDes$grp == x$grp,]$sample)])
   return(df)
 })
 
-avgCPM <- data.frame(avgCPM, row.names = avgCPM$grp)
-avgCPM <- avgCPM[, -1]
-avgCPM <- t(avgCPM)
-
-
-row.names(avgCPM) <- gsub("WPW_Inoculation_Trinity_C500_", "", row.names(avgCPM))
+colnames(avgCPM) <- 
+  gsub("WPW_Inoculation_Trinity_BBMerged_31May2016_TRINITY_", "", colnames(avgCPM))
+n <- avgCPM$grp
+avgCPM <- as.data.frame(t(avgCPM[,-1]))
+colnames(avgCPM) <- n
 
 
 sidf <- load_focus_statInf()
-sidf$contig <- as.character(gsub("WPW_Inoculation_Trinity_C500_", "", sidf$contig))
+sidf$cds <- 
+  as.character(gsub("WPW_Inoculation_Trinity_BBMerged_31May2016_TRINITY_", "", sidf$cds))
 
 
 annots <- read.delim(
-  "../results/WPW_Inoculation_Trinity_C500.diffExp.lfc2.blastxNr.collapsed.txt", 
-  row.names = 1)
-row.names(annots) <- gsub("WPW_Inoculation_Trinity_C500_", "", row.names(annots))
+  "../results/WPW_Inoculation_Trinity_BBMerged_31May2016.transdecoder.cds.nr.diffExp.blastxNR.collapsed.txt", row.names = 1)
+row.names(annots) <- 
+  gsub("WPW_Inoculation_Trinity_BBMerged_31May2016_TRINITY_", "", row.names(annots))
 annots$annot <- as.character(annots$annot)
 
 
@@ -58,7 +58,7 @@ constDiff <- (subset(sidf, sidf$focus_term == "constDiff" &
                        sidf$adj.P.Val <= pCutoff & abs(sidf$logFC) >= lfcCutoff))
 
 # Subset constitutive DE contigs from avgCPM
-constDiff_avgCPM <- avgCPM[rownames(avgCPM) %in% constDiff$contig,]
+constDiff_avgCPM <- avgCPM[rownames(avgCPM) %in% constDiff$cds,]
 
 
 # Create cellnote when mouse hover over
@@ -72,13 +72,12 @@ for (i in 1:6) {
 }
 
 
-constDiff_row_dist <- vegdist(constDiff_avgCPM, method = "horn")
-constDiff_row_hclust <- hclust(constDiff_row_dist, "average")
+constDiff_row_dist <- as.dist(1 - cor(t(constDiff_avgCPM), method = "spearman"))
+constDiff_row_hclust <- hclust(constDiff_row_dist, method = "complete")
 constDiff_row_dendrogram <- as.dendrogram(constDiff_row_hclust)
 
-
-constDiff_col_dist <- vegdist(t(constDiff_avgCPM), method = "horn")
-constDiff_col_hclust <- hclust(constDiff_col_dist, "average")
+constDiff_col_dist <- as.dist(1 - cor(constDiff_avgCPM, method = "spearman"))
+constDiff_col_hclust <- hclust(constDiff_col_dist, method = "complete")
 constDiff_col_dendrogram <- as.dendrogram(constDiff_col_hclust)
 
 

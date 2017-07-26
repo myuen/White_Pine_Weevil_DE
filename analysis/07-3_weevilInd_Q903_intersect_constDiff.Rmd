@@ -2,11 +2,10 @@
 Create an interactive heatmap with bubble containing information of contig ID, expression value in CPM and annotation when mouse-over.
 -->
 
-
 ```{r, echo=FALSE, message=FALSE}
-library(vegan)
-library(htmlwidgets)
 library(d3heatmap)
+library(htmlwidgets)
+library(plyr)
 
 source("helper02_load-exp-des.r")
 source("helper03_load-focus-statinf.r")
@@ -20,7 +19,7 @@ lfcCutoff <- 2
 pCutoff <- 0.01
 
 
-cpmCounts <- read.table("../results/normalized_cpm.txt")
+cpmCounts <- read.table("../results/normalized_cpm.15July.txt")
 
 
 expDes <- load_expDes()
@@ -30,33 +29,32 @@ expDes$grp <-
                                      rep(levels(tx), each = 2), sep = ".")))
 
 avgCPM <- ddply(expDes, ~grp, function(x) {
-  df <- rowMeans(cpmCounts[,c(expDes[expDes$grp == x$grp,]$sample)])
+  df <- rowMeans(cpmCounts[, c(expDes[expDes$grp == x$grp,]$sample)])
   return(df)
 })
 
-avgCPM <- data.frame(avgCPM, row.names = avgCPM$grp)
-avgCPM <- avgCPM[, -1]
-avgCPM <- t(avgCPM)
+colnames(avgCPM) <- 
+  gsub("WPW_Inoculation_Trinity_BBMerged_31May2016_TRINITY_", "", colnames(avgCPM))
+n <- avgCPM$grp
+avgCPM <- as.data.frame(t(avgCPM[,-1]))
+colnames(avgCPM) <- n
 
 
-row.names(avgCPM) <- gsub("WPW_Inoculation_Trinity_C500_", "", row.names(avgCPM))
-
-
-sidf.wide <- read.table("../results/limma-results-focus-terms.wide.tsv")
-row.names(sidf.wide) <- as.character(gsub("WPW_Inoculation_Trinity_C500_", "",
-                                          row.names(sidf.wide)))
+sidf.wide <- read.table("../results/limma-results-focus-terms.wide.15July.tsv")
+row.names(sidf.wide) <- 
+  as.character(gsub("WPW_Inoculation_Trinity_BBMerged_31May2016_TRINITY_", "", row.names(sidf.wide)))
 
 
 annots <- read.delim(
-  "../results/WPW_Inoculation_Trinity_C500.diffExp.lfc2.blastxNr.collapsed.txt", 
-  row.names = 1)
-row.names(annots) <- gsub("WPW_Inoculation_Trinity_C500_", "", row.names(annots))
+  "../results/WPW_Inoculation_Trinity_BBMerged_31May2016.transdecoder.cds.nr.diffExp.blastxNR.collapsed.txt", row.names = 1)
+row.names(annots) <- 
+  gsub("WPW_Inoculation_Trinity_BBMerged_31May2016_TRINITY_", "", row.names(annots))
 annots$annot <- as.character(annots$annot)
 
 
 # Constitutive Control (H898C - Q903C)
 intersection <- subset(sidf.wide, 
-                       sidf.wide$adj.P.Val.constDiff <= pCutoff & 
+                       sidf.wide$adj.P.Val.constDiff <= pCutoff &
                          sidf.wide$adj.P.Val.weevilInd_Q903 <= pCutoff & 
                          abs(sidf.wide$logFC.constDiff) >= lfcCutoff &
                          abs(sidf.wide$logFC.weevilInd_Q903) >= lfcCutoff)
@@ -77,13 +75,12 @@ for (i in 1:6) {
 }
 
 
-intersection_row_dist <- vegdist(intersection_avgCPM, method = "horn")
-intersection_row_hclust <- hclust(intersection_row_dist, "average")
+intersection_row_dist <- as.dist(1 - cor(t(intersection_avgCPM), method = "spearman"))
+intersection_row_hclust <- hclust(intersection_row_dist, "complete")
 intersection_row_dendrogram <- as.dendrogram(intersection_row_hclust)
 
-
-intersection_col_dist <- vegdist(t(intersection_avgCPM), method = "horn")
-intersection_col_hclust <- hclust(intersection_col_dist, "average")
+intersection_col_dist <- as.dist(1 - cor(intersection_avgCPM, method = "spearman"))
+intersection_col_hclust <- hclust(intersection_col_dist, "complete")
 intersection_col_dendrogram <- as.dendrogram(intersection_col_hclust)
 
 
