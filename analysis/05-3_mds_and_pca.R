@@ -45,7 +45,7 @@ v <- voom(y, modMat, plot = TRUE) # take a couple moments
 
 
 # MDS analysis
-png(filename = "../results/figures/wpw_mds.31May2016.png", width = 1680, height = 1050)
+png(filename = "../results/figures/wpw_mds.25July2017.png", width = 1680, height = 1050)
 plotMDS(v, top=Inf)
 dev.off()
 
@@ -68,4 +68,4 @@ wpw_pca <- ggplot(pca, aes(PC1, PC2, color = expDes$grp, shape = expDes$gType)) 
   theme(legend.key = element_blank()) + 
   guides(colour = guide_legend(override.aes = list(shape = 15)), shape = FALSE)
 
-ggsave("../results/figures/wpw_pca.7Nov2016.png", plot = wpw_pca, width = 16, height = 9)
+ggsave("../results/figures/wpw_pca.25July2017.png", plot = wpw_pca, width = 16, height = 9)
