@@ -76,11 +76,11 @@ for (i in 1:6) {
 
 
 weevilInd_q903_row_dist <- as.dist(1 - cor(t(weevilInd_q903_avgCPM), method = "spearman"))
-weevilInd_q903_row_hclust <- hclust(weevilInd_q903_row_dist, method = "average")
+weevilInd_q903_row_hclust <- hclust(weevilInd_q903_row_dist, method = "complete")
 weevilInd_q903_row_dendrogram <- as.dendrogram(weevilInd_q903_row_hclust)
 
 weevilInd_q903_col_dist <- as.dist(1 - cor(weevilInd_q903_avgCPM, method = "spearman"))
-weevilInd_q903_col_hclust <- hclust(weevilInd_q903_col_dist, method = "average")
+weevilInd_q903_col_hclust <- hclust(weevilInd_q903_col_dist, method = "complete")
 weevilInd_q903_col_dendrogram <- as.dendrogram(weevilInd_q903_col_hclust)
 
 
