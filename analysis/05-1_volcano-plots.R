@@ -14,7 +14,7 @@ str(sidf)
 lfcCutoff <- 2
 
 # p-value cut-off.  Anything > pCutoff will be deemed statistically insignificant.
-pCutoff <- 0.05
+pCutoff <- 0.01
 
 
 # You should be able to pass focus_terms <- levels(sidf$focus_term) to lapply
@@ -34,7 +34,7 @@ focus_terms <- levels(sidf$focus_term)
 map(focus_terms, function(x) {
   p <- volcanoPlot(subset(sidf, sidf$focus_term == x), lfcCutoff, pCutoff, x)
 
-  ggsave(paste0("../results/figures/", x, "_vPlot.5May2017.png"),
+  ggsave(paste0("../results/figures/", x, "_vPlot.25July2017.png"),
          plot = p, height = 8.5, width = 11)
   }
 )
