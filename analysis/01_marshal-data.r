@@ -1,3 +1,4 @@
+library(dplyr)
 library(purrr)
 library(stringr)
 library(testthat) # facilitate tests that will catch changes on re-analysis
