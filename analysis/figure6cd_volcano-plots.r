@@ -1,5 +1,6 @@
+### figure 6c + 6d
+
 library(ggplot2)
-library(purrr)
 
 setwd("analysis/")
 
@@ -14,27 +15,11 @@ str(sidf)
 lfcCutoff <- 2
 
 # p-value cut-off.  Anything > pCutoff will be deemed statistically insignificant.
-pCutoff <- 0.01
+pCutoff <- 0.05
 
 
-# You should be able to pass focus_terms <- levels(sidf$focus_term) to lapply
-# but one of our focus_term do not produce any sig. DE contigs and will crash ggplot
+fig6c <- volcanoPlot(subset(sidf, sidf$focus_term == "constDiff"), lfcCutoff, pCutoff, "(c)")
+ggsave("../results/figures/fig6c.3Aug2017.tiff", plot = fig6c, height = 3.5, width = 4)
 
-#        focus_term   up down  sum
-# 1       constDiff 2279 2242 4521
-# 2  woundResp_Q903    0    1    1
-# 3  woundResp_H898    0    0    0
-# 4  weevilInd_Q903 2000 3763 5763
-# 5  weevilInd_H898    0    0    0
-# 6 weevilCtrl_Q903 3319 3925 7244
-# 7 weevilCtrl_H898    2    1    3
-
-focus_terms <- levels(sidf$focus_term)
-
-map(focus_terms, function(x) {
-  p <- volcanoPlot(subset(sidf, sidf$focus_term == x), lfcCutoff, pCutoff, x)
-
-  ggsave(paste0("../results/figures/", x, "_vPlot.25July2017.png"),
-         plot = p, height = 8.5, width = 11)
-  }
-)
+fig6d <- volcanoPlot(subset(sidf, sidf$focus_term == "weevilInd_Q903"), lfcCutoff, pCutoff, "(d)")
+ggsave("../results/figures/fig6d.3Aug2017.tiff", plot = fig6d, height = 3.5, width = 4)
