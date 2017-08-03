@@ -14,7 +14,7 @@ volcanoPlot <- function(df, lfcCutoff, pCutoff, title) {
     geom_abline(aes(intercept = -log10(pCutoff), slope = 0), colour = "blue") + 
     geom_vline(xintercept = lfcCutoff, colour = "blue") + 
     geom_vline(xintercept = -(lfcCutoff), colour = "blue") +
-    labs(title = title, x = "Log 2 Fold Change", y = "-log 10 (Adjusted P Value)") + 
+    labs(title = title, x = "Log 2 Fold Change", y = "-log 10 (Adjusted p-Value)") + 
     scale_x_continuous(limits = c(-20, 20)) + theme_bw() + 
     theme(plot.title = element_text(size = rel(2)), legend.position = "none")
   
