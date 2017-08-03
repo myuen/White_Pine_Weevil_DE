@@ -39,7 +39,7 @@ colnames(modMat)
 
 #' voom transformation
 #+ voom-plot
-v <- voom(y, modMat, plot = TRUE) # take a couple moments
+v <- voom(y, modMat, plot = FALSE) # take a couple moments
 
 
 # PCA analysis
@@ -56,10 +56,10 @@ wpw_pca <-
              "Q903.Control" = "#7F0000",
              "Q903.Gallery" = "#d7301f",
              "Q903.Wound" = "#fc8d59")) +
-  labs(title = "Voom + Limma Principal Component Analysis", color = "Groups", shape = NULL) +
+  labs(color = "Groups", shape = NULL) +
   theme_bw() +
   theme(legend.position = "bottom", legend.box.background = element_rect(),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
   guides(colour = guide_legend(nrow = 1, override.aes = list(shape = 15)), shape = FALSE)
 
-ggsave("../results/figures/wpw_pca.31July2017.png", plot = wpw_pca, width = 9, height = 7)
+ggsave("../results/figures/fig6a.3Aug2017.tiff", plot = wpw_pca, width = 9, height = 7)
