@@ -1,3 +1,6 @@
+### Figure 6a
+### PCA plot
+
 library(edgeR)
 library(ggplot2)
 library(testthat) # facilitate tests that will catch changes on re-analysis
@@ -45,9 +48,14 @@ v <- voom(y, modMat, plot = FALSE) # take a couple moments
 # PCA analysis
 pca <- as.data.frame(prcomp(t(v$E))$x)
 
+boldText <- element_text(face = "bold")
+
 wpw_pca <- 
-  ggplot(pca, aes(PC1, PC2, color = expDes$grp, shape = expDes$gType)) + geom_point(size = 2.5) +
+  ggplot(pca, aes(PC1, PC2, color = expDes$grp, shape = expDes$gType, 
+                  family = "Helvetica", fontface = "bold", size = 12)) + 
+  geom_point(size = 4) +
   scale_color_manual(
+    labels = c("R-C", "R-G", "R-W", "S-C", "S-G", "S-W"),
     limits = c("H898.Control", "H898.Gallery", "H898.Wound",
                "Q903.Control", "Q903.Gallery", "Q903.Wound"),
     values=c("H898.Control" = "#4d004b",
@@ -58,8 +66,10 @@ wpw_pca <-
              "Q903.Wound" = "#fc8d59")) +
   labs(color = "Groups", shape = NULL) +
   theme_bw() +
-  theme(legend.position = "bottom", legend.box.background = element_rect(),
+  theme(axis.title = boldText, axis.text = boldText,
+        legend.box.background = element_rect(), legend.text = boldText, 
+        legend.title = element_blank(), legend.position = "bottom", 
         panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
   guides(colour = guide_legend(nrow = 1, override.aes = list(shape = 15)), shape = FALSE)
 
-ggsave("../results/figures/fig6a.3Aug2017.tiff", plot = wpw_pca, width = 9, height = 7)
+ggsave("../results/figures/fig6a.4Aug2017.tiff", plot = wpw_pca, width = 9, height = 7)
