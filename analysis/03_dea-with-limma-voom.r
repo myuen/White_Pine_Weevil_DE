@@ -1,6 +1,5 @@
 #+ setup, include = FALSE
 library(knitr)
-opts_chunk$set(fig.path = 'figure/03-dea-with-limma-voom-')
 
 library(dplyr)
 library(edgeR)
